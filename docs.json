@@ -9,14 +9,14 @@
     "Function" : [
       {
         "doc" : "Returns a boolean indicating whether Dark Mode is on or off.\n\nReturns:\n * (Boolean) `true` if Dark Mode is on and `false` if it's off.",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Returns a boolean indicating whether Dark Mode is on or off.",
           ""
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
-        "parameters" : [
-
-        ],
+        "name" : "isOn",
         "notes" : [
 
         ],
@@ -26,7 +26,7 @@
           " * (Boolean) `true` if Dark Mode is on and `false` if it's off."
         ],
         "def" : "DarkMode.isOn() -> boolean",
-        "name" : "isOn"
+        "desc" : "Returns a boolean indicating whether Dark Mode is on or off."
       }
     ],
     "Variable" : [
@@ -35,26 +35,28 @@
     "stripped_doc" : [
 
     ],
+    "desc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
+    "type" : "Module",
     "Deprecated" : [
 
     ],
-    "type" : "Module",
-    "desc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
     "Constructor" : [
 
     ],
-    "doc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
+    "Field" : [
+
+    ],
     "items" : [
       {
         "doc" : "Returns a boolean indicating whether Dark Mode is on or off.\n\nReturns:\n * (Boolean) `true` if Dark Mode is on and `false` if it's off.",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Returns a boolean indicating whether Dark Mode is on or off.",
           ""
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
-        "parameters" : [
-
-        ],
+        "name" : "isOn",
         "notes" : [
 
         ],
@@ -64,20 +66,20 @@
           " * (Boolean) `true` if Dark Mode is on and `false` if it's off."
         ],
         "def" : "DarkMode.isOn() -> boolean",
-        "name" : "isOn"
+        "desc" : "Returns a boolean indicating whether Dark Mode is on or off."
       },
       {
         "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
-        "stripped_doc" : [
-          "Binds hotkey mappings for this spoon.",
-          ""
-        ],
-        "desc" : "Binds hotkey mappings for this spoon.",
         "parameters" : [
           " * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:",
           "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
           ""
         ],
+        "stripped_doc" : [
+          "Binds hotkey mappings for this spoon.",
+          ""
+        ],
+        "name" : "bindHotkeys",
         "notes" : [
 
         ],
@@ -87,18 +89,18 @@
           " * Self"
         ],
         "def" : "DarkMode:bindHotkeys(mapping) -> self",
-        "name" : "bindHotkeys"
+        "desc" : "Binds hotkey mappings for this spoon."
       },
       {
         "doc" : "Turns Dark Mode off.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Turns Dark Mode off.",
           ""
         ],
-        "desc" : "Turns Dark Mode off.",
-        "parameters" : [
-
-        ],
+        "name" : "off",
         "notes" : [
 
         ],
@@ -108,18 +110,18 @@
           " * Self"
         ],
         "def" : "DarkMode:off() -> self",
-        "name" : "off"
+        "desc" : "Turns Dark Mode off."
       },
       {
         "doc" : "Turns Dark Mode on.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Turns Dark Mode on.",
           ""
         ],
-        "desc" : "Turns Dark Mode on.",
-        "parameters" : [
-
-        ],
+        "name" : "on",
         "notes" : [
 
         ],
@@ -129,20 +131,20 @@
           " * Self"
         ],
         "def" : "DarkMode:on() -> self",
-        "name" : "on"
+        "desc" : "Turns Dark Mode on."
       },
       {
         "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n\nReturns:\n * Self",
-        "stripped_doc" : [
-          "Sets the schedule on which Dark Mode is enabled\/disabled.",
-          ""
-        ],
-        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
         "parameters" : [
           " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
           " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
           ""
         ],
+        "stripped_doc" : [
+          "Sets the schedule on which Dark Mode is enabled\/disabled.",
+          ""
+        ],
+        "name" : "setSchedule",
         "notes" : [
 
         ],
@@ -152,18 +154,18 @@
           " * Self"
         ],
         "def" : "DarkMode:setSchedule(onTime, offTime) -> self",
-        "name" : "setSchedule"
+        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled."
       },
       {
         "doc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
           ""
         ],
-        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
-        "parameters" : [
-
-        ],
+        "name" : "start",
         "notes" : [
 
         ],
@@ -173,18 +175,18 @@
           " * Self"
         ],
         "def" : "DarkMode:start() -> self",
-        "name" : "start"
+        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`)."
       },
       {
         "doc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
           ""
         ],
-        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
-        "parameters" : [
-
-        ],
+        "name" : "stop",
         "notes" : [
 
         ],
@@ -194,18 +196,18 @@
           " * Self"
         ],
         "def" : "DarkMode:stop() -> self",
-        "name" : "stop"
+        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule."
       },
       {
         "doc" : "Toggles Dark Mode.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Toggles Dark Mode.",
           ""
         ],
-        "desc" : "Toggles Dark Mode.",
-        "parameters" : [
-
-        ],
+        "name" : "toggle",
         "notes" : [
 
         ],
@@ -215,25 +217,26 @@
           " * Self"
         ],
         "def" : "DarkMode:toggle() -> self",
-        "name" : "toggle"
+        "desc" : "Toggles Dark Mode."
       }
     ],
     "Command" : [
 
     ],
+    "doc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
     "Method" : [
       {
         "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n\nReturns:\n * Self",
-        "stripped_doc" : [
-          "Sets the schedule on which Dark Mode is enabled\/disabled.",
-          ""
-        ],
-        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
         "parameters" : [
           " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
           " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
           ""
         ],
+        "stripped_doc" : [
+          "Sets the schedule on which Dark Mode is enabled\/disabled.",
+          ""
+        ],
+        "name" : "setSchedule",
         "notes" : [
 
         ],
@@ -243,18 +246,18 @@
           " * Self"
         ],
         "def" : "DarkMode:setSchedule(onTime, offTime) -> self",
-        "name" : "setSchedule"
+        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled."
       },
       {
         "doc" : "Turns Dark Mode on.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Turns Dark Mode on.",
           ""
         ],
-        "desc" : "Turns Dark Mode on.",
-        "parameters" : [
-
-        ],
+        "name" : "on",
         "notes" : [
 
         ],
@@ -264,18 +267,18 @@
           " * Self"
         ],
         "def" : "DarkMode:on() -> self",
-        "name" : "on"
+        "desc" : "Turns Dark Mode on."
       },
       {
         "doc" : "Turns Dark Mode off.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Turns Dark Mode off.",
           ""
         ],
-        "desc" : "Turns Dark Mode off.",
-        "parameters" : [
-
-        ],
+        "name" : "off",
         "notes" : [
 
         ],
@@ -285,18 +288,18 @@
           " * Self"
         ],
         "def" : "DarkMode:off() -> self",
-        "name" : "off"
+        "desc" : "Turns Dark Mode off."
       },
       {
         "doc" : "Toggles Dark Mode.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Toggles Dark Mode.",
           ""
         ],
-        "desc" : "Toggles Dark Mode.",
-        "parameters" : [
-
-        ],
+        "name" : "toggle",
         "notes" : [
 
         ],
@@ -306,18 +309,18 @@
           " * Self"
         ],
         "def" : "DarkMode:toggle() -> self",
-        "name" : "toggle"
+        "desc" : "Toggles Dark Mode."
       },
       {
         "doc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
           ""
         ],
-        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
-        "parameters" : [
-
-        ],
+        "name" : "start",
         "notes" : [
 
         ],
@@ -327,18 +330,18 @@
           " * Self"
         ],
         "def" : "DarkMode:start() -> self",
-        "name" : "start"
+        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`)."
       },
       {
         "doc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.\n\nReturns:\n * Self",
+        "parameters" : [
+
+        ],
         "stripped_doc" : [
           "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
           ""
         ],
-        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
-        "parameters" : [
-
-        ],
+        "name" : "stop",
         "notes" : [
 
         ],
@@ -348,20 +351,20 @@
           " * Self"
         ],
         "def" : "DarkMode:stop() -> self",
-        "name" : "stop"
+        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule."
       },
       {
         "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
-        "stripped_doc" : [
-          "Binds hotkey mappings for this spoon.",
-          ""
-        ],
-        "desc" : "Binds hotkey mappings for this spoon.",
         "parameters" : [
           " * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:",
           "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
           ""
         ],
+        "stripped_doc" : [
+          "Binds hotkey mappings for this spoon.",
+          ""
+        ],
+        "name" : "bindHotkeys",
         "notes" : [
 
         ],
@@ -371,11 +374,8 @@
           " * Self"
         ],
         "def" : "DarkMode:bindHotkeys(mapping) -> self",
-        "name" : "bindHotkeys"
+        "desc" : "Binds hotkey mappings for this spoon."
       }
-    ],
-    "Field" : [
-
     ],
     "name" : "DarkMode"
   }

@@ -20,6 +20,7 @@ obj.timer = nil
 
 
 -- Local helper functions
+local secondsInADay = 60*60*24
 
 -- Get UTC offset needed to get sunrise and sunset times
 local function getUtcOffset()
@@ -47,7 +48,7 @@ local function processScheduleTime(time)
     return time
   else
     local secondsFromMidnight = hs.timer.seconds(time)
-    assert(secondsFromMidnight < 86400, "Time given wasn't a time of day")
+    assert(secondsFromMidnight < secondsInADay, "Time given wasn't a time of day")
     return secondsFromMidnight
   end
 end
@@ -118,6 +119,7 @@ function obj:toggle()
   return self
 end
 
+
 -- This function does all the important work of setting Dark Mode based on the schedule.
 function obj:setDarkModeOnSchedule()
   -- Setup variables that we'll need
@@ -125,33 +127,28 @@ function obj:setDarkModeOnSchedule()
   local utcOffset = getUtcOffset()
   local currentTime = os.time()
   local midnightTime = currentTime - hs.timer.localTime()
-  local onTime
-  local offTime
-  local predicateFn
 
   -- Get the unix time for the onTime and offTime
-  if type(self.schedule.onAt) == "number" then
-    onTime = midnightTime + self.schedule.onAt
-  else
-    onTime = hs.location[self.schedule.onAt](location, utcOffset)
+  local function getScheduleUnixTime(time)
+    if type(time) == "number" then
+      return midnightTime + time
+    end
+    return hs.location[time](location, utcOffset)
   end
-
-  if type(self.schedule.offAt) == "number" then
-    offTime = midnightTime + self.schedule.offAt
-  else
-    offTime = hs.location[self.schedule.offAt](location, utcOffset)
-  end
+  local onTime = getScheduleUnixTime(self.schedule.onAt)
+  local offTime = getScheduleUnixTime(self.schedule.offAt)
 
   -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
   if onTime > offTime and currentTime >= onTime then
     if type(self.schedule.offAt) == "number" then
-      offTime = offTime + 60*60*24
+      offTime = offTime + secondsInADay
     else
-      offTime = hs.location[self.schedule.offAt](location, utcOffset, os.date("*t",offTime + 60*60*24))
+      offTime = hs.location[self.schedule.offAt](location, utcOffset, os.date("*t",offTime + secondsInADay))
     end
   end
 
   -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
+  local predicateFn
   if currentTime >= onTime and currentTime < offTime then
     setDarkMode(true)
     predicateFn = function() return os.time() >= offTime end
