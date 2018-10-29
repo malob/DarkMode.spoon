@@ -1,11 +1,6 @@
 --- === DarkMode ===
 ---
---- This spoon allow you to enable, disable, and toggle Dark Mode in macOS by doing the following respectively:
----  * `DarkMode:setDarkMode(true)`
----  * `DarkMode:setDarkMode(false)`
----  * `DarkMode:setDarkMode()`
----
---- Additionally it can automatically enable/disable Dark Mode based on a schedule. The default schedule is to enable Dark Mode at sunset, and to disable it at sunrise. Use `DarkMode:setSchedule()` to change the schedule. To enable the the schedule call `DarkMode:start()`.
+--- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.
 
 local obj = {}
 
@@ -23,15 +18,43 @@ obj.schedule = {
 }
 obj.timer = nil
 
+
 -- Local helper functions
+
+-- Get UTC offset needed to get sunrise and sunset times
 local function getUtcOffset()
   local utcOffset = hs.execute("date +%z")
   return utcOffset:sub(1, 3) + utcOffset:sub(4, 5)/60
 end
 
+-- Enable/disable darkMode
+local function setDarkMode(state)
+  hs.preferencesDarkMode(state)
+  hs.console.darkMode(state)
+  hs.console.consoleCommandColor{ white = (state and 1) or 0}
+
+  hs.osascript.javascript(
+    string.format(
+      "Application('System Events').appearancePreferences.darkMode.set(%s)",
+      state
+    )
+  )
+end
+
+-- Validate and process schedule times
+local function processScheduleTime(time)
+  if time == "sunrise" or time == "sunset" then
+    return time
+  else
+    local secondsFromMidnight = hs.timer.seconds(time)
+    assert(secondsFromMidnight < 86400, "Time given wasn't a time of day")
+    return secondsFromMidnight
+  end
+end
+
 --- DarkMode:setSchedule(onTime, offTime) -> self
 --- Method
---- Sets the schedule on which Dark Mode is enabled/disabled. `DarkMode:start()` needs to be called for new schedule to take effect before the currently active timer fires.
+--- Sets the schedule on which Dark Mode is enabled/disabled.
 ---
 --- Parameters:
 ---  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
@@ -40,54 +63,59 @@ end
 --- Returns:
 ---  * Self
 function obj:setSchedule(onTime, offTime)
-  if onTime == "sunrise" or onTime == "sunset" then
-    self.schedule.onAt = onTime
-  else
-    local startInSeconds = hs.timer.seconds(onTime)
-    assert(startInSeconds < 86400, "Start time given wasn't a time of day")
-    self.schedule.onAt = startInSeconds
-  end
+  self.schedule.onAt = processScheduleTime(onTime)
+  self.schedule.offAt = processScheduleTime(offTime)
 
-  if offTime == "sunrise" or offTime == "sunset" then
-    self.schedule.offAt = offTime
-  else
-    local stopInSeconds = hs.timer.seconds(offTime)
-    assert(stopInSeconds < 86400, "Stop time given wasn't a time of day")
-    self.schedule.offAt = stopInSeconds
+  if self.timer and self.timer:running() then
+    self:setDarkModeOnSchedule()
   end
-
   return self
 end
 
---- DarkMode.setDarkMode([state])
+--- DarkMode.isOn() -> boolean
 --- Function
---- This function enables/disables Dark Mode. When no parameter is given, it toggles Dark Mode.
+--- Returns a boolean indicating whether Dark Mode is on or off.
 ---
---- Parameters:
----  * (Optional) state (Boolean) - Should be `true` to enable Dark Mode and `false` to disable it. If this parameter is omitted, Dark Mode will be toggled.
-function obj.setDarkMode(state)
-  local appleScriptVar = state
-  if type(state) == "boolean" then
-    hs.preferencesDarkMode(state)
-  elseif state == nil then
-    hs.preferencesDarkMode(not hs.preferencesDarkMode())
-    appleScriptVar = "not dark mode"
-  else
-    error("DarkMode.setDarkMode() called with an argument that wasn't a boolean")
-  end
-
-  hs.osascript.applescript(
-    string.format(
-      [[
-      tell application "System Events"
-        tell appearance preferences
-          set dark mode to %s
-        end tell
-      end tell
-      ]],
-      appleScriptVar
-    )
+--- Returns:
+---  * (Boolean) `true` if Dark Mode is on and `false` if it's off.
+function obj.isOn()
+  local _, darkModeState = hs.osascript.javascript(
+    'Application("System Events").appearancePreferences.darkMode()'
   )
+  return darkModeState
+end
+
+--- DarkMode:on() -> self
+--- Method
+--- Turns Dark Mode on.
+---
+--- Returns:
+---  * Self
+function obj:on()
+  setDarkMode(true)
+  return self
+end
+
+--- DarkMode:off() -> self
+--- Method
+--- Turns Dark Mode off.
+---
+--- Returns:
+---  * Self
+function obj:off()
+  setDarkMode(false)
+  return self
+end
+
+--- DarkMode:toggle() -> self
+--- Method
+--- Toggles Dark Mode.
+---
+--- Returns:
+---  * Self
+function obj:toggle()
+  setDarkMode(not self.isOn())
+  return self
 end
 
 -- This function does all the important work of setting Dark Mode based on the schedule.
@@ -125,10 +153,10 @@ function obj:setDarkModeOnSchedule()
 
   -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
   if currentTime >= onTime and currentTime < offTime then
-    self.setDarkMode(true)
+    setDarkMode(true)
     predicateFn = function() return os.time() >= offTime end
   else
-    self.setDarkMode(false)
+    setDarkMode(false)
     predicateFn = function() return os.time() >= onTime end
   end
 
@@ -163,16 +191,19 @@ end
 
 --- DarkMode:bindHotkeys(mapping) -> self
 --- Method
---- Binds hotkey mappings for this spoon. Currently `toggleDarkMode` is the only availabe hotkey binding:
----  * `DarkMode:bindHotkeys({ toggleDarkMode = {{"cmd", "option", "ctrl"}, "d"} })`
+--- Binds hotkey mappings for this spoon.
 ---
 --- Parameters:
----  * mapping (Table) - A table containing hotkey mappings.
+---  * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:
+---    * `{toggle = {{"cmd", "option", "ctrl"}, "d"}}`
 ---
 --- Returns:
 ---  * Self
 function obj:bindHotkeys(mapping)
-  hs.hotkey.bind(mapping.toggleDarkMode[1], mapping.toggleDarkMode[2], self.setDarkMode())
+  for k, v in pairs(mapping) do
+    hs.hotkey.bind(v[1], v[2], function() return self[k](self, k) end)
+  end
+
   return self
 end
 
