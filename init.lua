@@ -5,7 +5,7 @@
 ---  * `DarkMode:setDarkMode(false)`
 ---  * `DarkMode:setDarkMode()`
 ---
---- Additionally it can automatically enable/disable Dark Mode based on a schedule. The default schedule is to enable Dark Mode a sunset, and to disable it at sunrise. Use `DarkMode:setSchedule()` to change the schedule. To enable the this functionality call `DarkMode:start()`.
+--- Additionally it can automatically enable/disable Dark Mode based on a schedule. The default schedule is to enable Dark Mode at sunset, and to disable it at sunrise. Use `DarkMode:setSchedule()` to change the schedule. To enable the the schedule call `DarkMode:start()`.
 
 local obj = {}
 
@@ -34,8 +34,8 @@ end
 --- Sets the schedule on which Dark Mode is enabled/disabled. `DarkMode:start()` needs to be called for new schedule to take effect before the currently active timer fires.
 ---
 --- Parameters:
----  * onTime (String)  - Time of day when Dark Mode should be *enable* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
----  * offTime (String) - Time of day when Dark Mode should be *disable* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+---  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+---  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
 ---
 --- Returns:
 ---  * Self
@@ -63,7 +63,7 @@ end
 --- Function
 --- This function enables/disables Dark Mode. When no parameter is given, it toggles Dark Mode.
 ---
---- Parameters
+--- Parameters:
 ---  * (Optional) state (Boolean) - Should be `true` to enable Dark Mode and `false` to disable it. If this parameter is omitted, Dark Mode will be toggled.
 function obj.setDarkMode(state)
   local appleScriptVar = state
@@ -97,9 +97,9 @@ function obj:setDarkModeOnSchedule()
   local utcOffset = getUtcOffset()
   local currentTime = os.time()
   local midnightTime = currentTime - hs.timer.localTime()
-  local onTime = nil
-  local offTime = nil
-  local predicateFn = nil
+  local onTime
+  local offTime
+  local predicateFn
 
   -- Get the unix time for the onTime and offTime
   if type(self.schedule.onAt) == "number" then
@@ -114,7 +114,7 @@ function obj:setDarkModeOnSchedule()
     offTime = hs.location[self.schedule.offAt](location, utcOffset)
   end
 
-  -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to up one day.
+  -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
   if onTime > offTime and currentTime >= onTime then
     if type(self.schedule.offAt) == "number" then
       offTime = offTime + 60*60*24
@@ -124,7 +124,7 @@ function obj:setDarkModeOnSchedule()
   end
 
   -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
-  if currentTime >= onTime and currentTime <= offTime then
+  if currentTime >= onTime and currentTime < offTime then
     self.setDarkMode(true)
     predicateFn = function() return os.time() >= offTime end
   else
