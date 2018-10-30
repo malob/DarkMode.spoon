@@ -50,6 +50,17 @@ local function processScheduleTime(time)
   end
 end
 
+-- Convert seconds to HH:MM:SS format
+local function timeOfDay(time, exp)
+  if type(time) == "number" then
+    exp = exp or 1
+    local x = string.format("%i", (time % (60^exp)) // 60^(exp-1))
+    x = x//10 > 0 and x or "0" .. x
+    return exp < 3 and (timeOfDay(time, exp + 1) .. ":" .. x) or x
+  end
+  return time
+end
+
 -- This function does all the important work of setting Dark Mode based on the schedule.
 local function setDarkModeOnSchedule()
   -- Setup variables that we'll need
@@ -130,6 +141,19 @@ end
 function obj.isScheduleOn()
   if timer then return timer:running() end
   return false
+end
+
+--- DarkMode.getSchedule() -> table
+--- Function
+--- Get the current schedule
+---
+--- Returns:
+---  * (Table) A table with two elements with keys, `onAt` and `offAt`, each with a string value of "sunrise", "sunset", or a time of day formatted as "HH:MM:SS" (in 24-hour time).
+function obj.getSchedule()
+  return {
+    onAt = timeOfDay(schedule.onAt),
+    offAt = timeOfDay(schedule.offAt)
+  }
 end
 
 --- DarkMode:setSchedule(onTime, offTime) -> self
