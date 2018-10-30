@@ -11,16 +11,13 @@ obj.author = "Malo Bourgon"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 obj.homepage = "https://github.com/malob/DarkMode.spoon"
 
--- Spoon variables (no intended for public use)
-obj.schedule = {
+-- Private varialbes/functions
+local secondsInADay = 60*60*24
+local schedule = {
   onAt = "sunset",
   offAt = "sunrise"
 }
-obj.timer = nil
-
-
--- Local helper functions
-local secondsInADay = 60*60*24
+local timer
 
 -- Get UTC offset needed to get sunrise and sunset times
 local function getUtcOffset()
@@ -53,25 +50,63 @@ local function processScheduleTime(time)
   end
 end
 
---- DarkMode:setSchedule(onTime, offTime) -> self
---- Method
---- Sets the schedule on which Dark Mode is enabled/disabled.
----
---- Parameters:
----  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
----  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
----
---- Returns:
----  * Self
-function obj:setSchedule(onTime, offTime)
-  self.schedule.onAt = processScheduleTime(onTime)
-  self.schedule.offAt = processScheduleTime(offTime)
+-- This function does all the important work of setting Dark Mode based on the schedule.
+local function setDarkModeOnSchedule()
+  -- Setup variables that we'll need
+  local location = hs.location.get()
+  local utcOffset = getUtcOffset()
+  local currentTime = os.time()
+  local midnightTime = currentTime - hs.timer.localTime()
 
-  if self.timer and self.timer:running() then
-    self:setDarkModeOnSchedule()
+  -- Get the unix time for the onTime and offTime
+  local function getScheduleUnixTime(time)
+    if type(time) == "number" then
+      return midnightTime + time
+    end
+    if location then
+      return hs.location[time](location, utcOffset)
+    end
   end
-  return self
+  local onTime = getScheduleUnixTime(schedule.onAt)
+  local offTime = getScheduleUnixTime(schedule.offAt)
+
+  if not onTime or not offTime then
+    hs.notify.new(
+      {
+        title = "DarkMode.spoon",
+        subTitle = "Schedule disabled: location unavailable",
+        informativeText = "Sunset/sunrise cannot be calculated",
+        withdrawAfter = 0
+      }
+    ):send()
+    obj:stop()
+    return
+  end
+
+  -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
+  if onTime > offTime and currentTime >= onTime then
+    if type(schedule.offAt) == "number" then
+      offTime = offTime + secondsInADay
+    else
+      offTime = hs.location[schedule.offAt](location, utcOffset, os.date("*t",offTime + secondsInADay))
+    end
+  end
+
+  -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
+  local predicateFn
+  if currentTime >= onTime and currentTime < offTime then
+    setDarkMode(true)
+    predicateFn = function() return os.time() >= offTime end
+  else
+    setDarkMode(false)
+    predicateFn = function() return os.time() >= onTime end
+  end
+
+  -- Create new timer. hs.timer.waitUntil used since timers that fire at a set time will skip a day if computer is sleeping when the time comes.
+  local actionFn = function() return setDarkModeOnSchedule() end
+  timer = hs.timer.waitUntil(predicateFn, actionFn, 60)
 end
+
 
 --- DarkMode.isOn() -> boolean
 --- Function
@@ -84,6 +119,37 @@ function obj.isOn()
     'Application("System Events").appearancePreferences.darkMode()'
   )
   return darkModeState
+end
+
+--- DarkMode.isScheduleOn() -> boolean
+--- Function
+--- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
+---
+--- Returns:
+---  * (Boolean) `true` if Dark Mode schedule is active and `false` if it's not.
+function obj.isScheduleOn()
+  if timer then return timer:running() end
+  return false
+end
+
+--- DarkMode:setSchedule(onTime, offTime) -> self
+--- Method
+--- Sets the schedule on which Dark Mode is enabled/disabled.
+---
+--- Parameters:
+---  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+---  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+---
+--- Returns:
+---  * Self
+function obj:setSchedule(onTime, offTime)
+  schedule.onAt = processScheduleTime(onTime)
+  schedule.offAt = processScheduleTime(offTime)
+
+  if timer and timer:running() then
+    setDarkModeOnSchedule()
+  end
+  return self
 end
 
 --- DarkMode:on() -> self
@@ -119,65 +185,6 @@ function obj:toggle()
   return self
 end
 
-
--- This function does all the important work of setting Dark Mode based on the schedule.
-function obj:setDarkModeOnSchedule()
-  -- Setup variables that we'll need
-  local location = hs.location.get()
-  local utcOffset = getUtcOffset()
-  local currentTime = os.time()
-  local midnightTime = currentTime - hs.timer.localTime()
-
-  -- Get the unix time for the onTime and offTime
-  local function getScheduleUnixTime(time)
-    if type(time) == "number" then
-      return midnightTime + time
-    end
-    if location then
-      return hs.location[time](location, utcOffset)
-    end
-  end
-  local onTime = getScheduleUnixTime(self.schedule.onAt)
-  local offTime = getScheduleUnixTime(self.schedule.offAt)
-
-  if not onTime or not offTime then
-    hs.notify.new(
-      {
-        title = "DarkMode.spoon",
-        subTitle = "Schedule disabled: location unavailable",
-        informativeText = "Sunset/sunrise cannot be calculated",
-        withdrawAfter = 0
-      }
-    ):send()
-    return self:stop()
-  end
-
-  -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
-  if onTime > offTime and currentTime >= onTime then
-    if type(self.schedule.offAt) == "number" then
-      offTime = offTime + secondsInADay
-    else
-      offTime = hs.location[self.schedule.offAt](location, utcOffset, os.date("*t",offTime + secondsInADay))
-    end
-  end
-
-  -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
-  local predicateFn
-  if currentTime >= onTime and currentTime < offTime then
-    setDarkMode(true)
-    predicateFn = function() return os.time() >= offTime end
-  else
-    setDarkMode(false)
-    predicateFn = function() return os.time() >= onTime end
-  end
-
-  -- Create new timer. hs.timer.waitUntil used since timers that fire at a set time will skip a day if computer is sleeping when the time comes.
-  local actionFn = function() return self:setDarkModeOnSchedule() end
-  self.timer = hs.timer.waitUntil(predicateFn, actionFn, 60)
-
-  return self
-end
-
 --- DarkMode:start() -> self
 --- Method
 --- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
@@ -185,7 +192,7 @@ end
 --- Returns:
 ---  * Self
 function obj:start()
-  self:setDarkModeOnSchedule()
+  setDarkModeOnSchedule()
   return self
 end
 
@@ -196,7 +203,7 @@ end
 --- Returns:
 ---  * Self
 function obj:stop()
-  if self.timer then self.timer:stop() end
+  if timer then timer:stop() end
   return self
 end
 
