@@ -133,10 +133,24 @@ function obj:setDarkModeOnSchedule()
     if type(time) == "number" then
       return midnightTime + time
     end
-    return hs.location[time](location, utcOffset)
+    if location then
+      return hs.location[time](location, utcOffset)
+    end
   end
   local onTime = getScheduleUnixTime(self.schedule.onAt)
   local offTime = getScheduleUnixTime(self.schedule.offAt)
+
+  if not onTime or not offTime then
+    hs.notify.new(
+      {
+        title = "DarkMode.spoon",
+        subTitle = "Schedule disabled: location unavailable",
+        informativeText = "Sunset/sunrise cannot be calculated",
+        withdrawAfter = 0
+      }
+    ):send()
+    return self:stop()
+  end
 
   -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
   if onTime > offTime and currentTime >= onTime then
@@ -182,7 +196,7 @@ end
 --- Returns:
 ---  * Self
 function obj:stop()
-  self.timer:stop()
+  if self.timer then self.timer:stop() end
   return self
 end
 
