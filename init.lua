@@ -1,8 +1,10 @@
 -- luacheck: no global
 
 --- === DarkMode ===
----
---- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.
+--
+-- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically
+-- enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and
+-- disables it at sunrise.
 
 
 -----------------------
@@ -63,7 +65,7 @@ local function adjustedSunTime(sunEvent, daysOffset)
   )
 end
 
--- String -> Integer
+-- String -> Int
 -- Given a string of a sunEvent, "sunrise" or "sunset", returns unix time for sunEvent on current day
 local function sunTime(sunEvent)
   -- Funtion needed because of https://github.com/Hammerspoon/hammerspoon/issues/1977
@@ -80,7 +82,7 @@ local function sunTime(sunEvent)
 end
 
 -- String -> (_ -> ScheduleTimeTable)
--- ScheduleTimeTable { time :: Integer, sunEvent :: String/Nil }
+-- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil }
 --
 -- Given a string with time of day formatted as "HH:MM:SS"/"HH:MM", or "sunrise"/"sunset",
 -- returns a function that when called returns a table with a key `time` key with a unix time value, and
@@ -121,7 +123,7 @@ local function setDarkMode(state)
 end
 
 -- ScheduleTimeTable -> ScheduleTimeTable -> Number -> Bool -> Number
--- ScheduleTimeTable { time :: Integer, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
+-- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
 --
 -- Determins what time Dark Mode should be toggle again
 local function nextToggleTime(on, off, currentTime, darkModeisOn)
@@ -176,25 +178,28 @@ license = "MIT - https://opensource.org/licenses/MIT"
 homepage = "https://github.com/malob/DarkMode.spoon"
 
 --- DarkMode.schedule (Table)
---- Variable
---- A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on/off respectivly.
----
---- Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs.
+-- Variable
+-- A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by
+-- this spoon return a table indicating the time today when Dark Mode should be turn on/off respectivly.
+--
+-- Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers
+-- for whom `DarkMode:setSchedule()` isn't sufficient for their needs.
 schedule = {
   onAt = timeFnGenerator("sunset"),
   offAt = timeFnGenerator("sunrise")
 }
 
 --- DarkMode.functionToCall (Function)
---- Variable
---- A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.
+-- Variable
+-- A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled,
+-- and `false` when it's disabled.
 
---- DarkMode.isOn() -> Bool
---- Function
---- Returns a boolean indicating whether Dark Mode is on or off.
----
---- Returns:
----  * (Bool) `true` if Dark Mode is on and `false` if it's off.
+-- DarkMode.isOn() -> Bool
+-- Function
+-- Returns a boolean indicating whether Dark Mode is on or off.
+--
+-- Returns:
+--  * (Bool) `true` if Dark Mode is on and `false` if it's off.
 function isOn()
   local _, darkModeState = hs.osascript.javascript(
     'Application("System Events").appearancePreferences.darkMode()'
@@ -203,27 +208,27 @@ function isOn()
 end
 
 --- DarkMode:isScheduleOn() -> Bool
---- Method
---- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
----
---- Returns:
----  * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.
+-- Method
+-- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
+--
+-- Returns:
+--  * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.
 function isScheduleOn(self)
   if self.timer then return self.timer:running() end
   return false
 end
 
 --- DarkMode:getSchedule([inUnixTime]) -> table
---- Method
---- Get the schedule for the current day.
----
---- Parameters:
----  * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.
----
---- Returns:
----  * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,
----    `time` and optionally `sunEvent`, where the later will we string "sunrise" or "sunset" if the `time`
----    that time corresponds to a either a sunrise or sunset time.
+-- Method
+-- Get the schedule for the current day.
+--
+-- Parameters:
+--  * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.
+--
+-- Returns:
+--  * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,
+--    `time` and optionally `sunEvent`, where the later will we string "sunrise" or "sunset" if the `time`
+--    that time corresponds to a either a sunrise or sunset time.
 function getSchedule(self, inUnixTime)
     return hs.fnutils.imap(
       {"onAt", "offAt"},
@@ -240,15 +245,17 @@ function getSchedule(self, inUnixTime)
 end
 
 --- DarkMode:setSchedule(onTime, offTime) -> Self
---- Method
---- Sets the schedule on which Dark Mode is enabled/disabled.
----
---- Parameters:
----  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
----  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
----
---- Returns:
----  * Self
+-- Method
+-- Sets the schedule on which Dark Mode is enabled/disabled.
+--
+-- Parameters:
+--  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted
+--     as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+--  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted
+--     as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
+--
+-- Returns:
+--  * Self
 function setSchedule(self, onTime, offTime)
   self.schedule.onAt = timeFnGenerator(onTime)
   self.schedule.offAt = timeFnGenerator(offTime)
@@ -294,37 +301,39 @@ function toggle(self)
 end
 
 --- DarkMode:start() -> Self
---- Method
---- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
----
---- Returns:
----  * Self
+-- Method
+-- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`.
+-- By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
+--
+-- Returns:
+--  * Self
 function start(self)
   self.timer = manageDMSchedule(self.schedule)
   return self
 end
 
 --- DarkMode:stop() -> self
---- Method
---- Stops this spoon from enabling/disabling Dark Mode on a schedule.
----
---- Returns:
----  * Self
+-- Method
+-- Stops this spoon from enabling/disabling Dark Mode on a schedule.
+--
+-- Returns:
+--  * Self
 function stop(self)
   if self.timer then self.timer:stop() end
   return self
 end
 
 --- DarkMode:bindHotkeys(mapping) -> self
---- Method
---- Binds hotkey mappings for this spoon.
----
---- Parameters:
----  * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:
----    * `{toggle = {{"cmd", "option", "ctrl"}, "d"}}`
----
---- Returns:
----  * Self
+-- Method
+-- Binds hotkey mappings for this spoon.
+--
+-- Parameters:
+--  * mapping (Table) - A table with keys who's names correspond to methods of this spoon,
+--    and values that represent hotkey mappings. For example:
+--    * `{toggle = {{"cmd", "option", "ctrl"}, "d"}}`
+--
+-- Returns:
+--  * Self
 function bindHotkeys(self, mapping)
   for k, v in pairs(mapping) do
     hs.hotkey.bind(v[1], v[2], function() return self[k](self, k) end)
