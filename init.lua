@@ -1,4 +1,3 @@
--- luacheck: no global
 
 --- === DarkMode ===
 --
@@ -125,7 +124,7 @@ end
 -- ScheduleTimeTable -> ScheduleTimeTable -> Number -> Bool -> Number
 -- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
 --
--- Determins what time Dark Mode should be toggle again
+-- Determines what time Dark Mode should be toggled again
 local function nextToggleTime(on, off, currentTime, darkModeisOn)
   if darkModeisOn and currentTime > on.time then
     return off.sunEvent and adjustedSunTime(off.sunEvent, 1) or off.time + SECONDS_IN_A_DAY
@@ -157,7 +156,7 @@ local function manageDMSchedule(sched)
 
   local desiredState = shouldDMBeOn(on.time, off.time, currentTime)
   setDarkMode(desiredState)
-  local toggleTime = nextToggleTime(on, off, currentTime, desiderState)
+  local toggleTime = nextToggleTime(on, off, currentTime, desiredState)
   print(toggleTime)
   return hs.timer.waitUntil(
     function() return currentTime >= toggleTime end,
@@ -167,6 +166,7 @@ local function manageDMSchedule(sched)
 end
 
 
+-- luacheck: no global
 ------------
 -- Public --
 ------------
@@ -191,8 +191,10 @@ schedule = {
 
 --- DarkMode.functionToCall (Function)
 -- Variable
--- A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled,
--- and `false` when it's disabled.
+-- A function that's called every time Dark Mode is toggle by this spoon.
+-- The function provided should accept a boolean argument, which will be `true` when
+-- Dark Mode is enabled, and `false` when it's disabled.
+functionToCall = nil
 
 -- DarkMode.isOn() -> Bool
 -- Function
@@ -230,18 +232,18 @@ end
 --    `time` and optionally `sunEvent`, where the later will we string "sunrise" or "sunset" if the `time`
 --    that time corresponds to a either a sunrise or sunset time.
 function getSchedule(self, inUnixTime)
-    return hs.fnutils.imap(
-      {"onAt", "offAt"},
-      function(x)
-        if inUnixTime then return { [x] = self.schedule[x]() } end
-        return {
-          [x] = {
-            time = os.date("%T", self.schedule[x]().time),
-            sunEvent = self.schedule[x]().sunEvent
-          }
+  return hs.fnutils.imap(
+    {"onAt", "offAt"},
+    function(x)
+      if inUnixTime then return { [x] = self.schedule[x]() } end
+      return {
+        [x] = {
+          time = os.date("%T", self.schedule[x]().time),
+          sunEvent = self.schedule[x]().sunEvent
         }
-      end
-    )
+      }
+    end
+  )
 end
 
 --- DarkMode:setSchedule(onTime, offTime) -> Self
