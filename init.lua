@@ -1,37 +1,110 @@
+-- luacheck: no global
+
 --- === DarkMode ===
 ---
 --- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.
 
-local obj = {}
 
--- Metadata
-obj.name = "DarkMode"
-obj.version = "1.0"
-obj.author = "Malo Bourgon"
-obj.license = "MIT - https://opensource.org/licenses/MIT"
-obj.homepage = "https://github.com/malob/DarkMode.spoon"
-
--- Private varialbes/functions
-local secondsInADay = 60*60*24
-local schedule = {
-  onAt = "sunset",
-  offAt = "sunrise"
+-----------------------
+-- Setup Environment --
+-----------------------
+-- Create locals for all needed globals so we have access to them
+local print = print
+local pairs = pairs
+local os = { date = os.date, time = os.time }
+local string = { format = string.format }
+local hs = {
+  console = hs.console,
+  execute = hs.execute,
+  fnutils = hs.fnutils,
+  location = hs.location,
+  notify = hs.notify,
+  osascript = hs.osascript,
+  preferencesDarkMode = hs.preferencesDarkMode,
+  timer = hs.timer,
+  inspect = hs.inspect
 }
-local timer
 
--- Get UTC offset needed to get sunrise and sunset times
-local function getUtcOffset()
-  local utcOffset = hs.execute("date +%z")
-  return utcOffset:sub(1, 3) + utcOffset:sub(4, 5)/60
+-- Empty environment in this scope
+-- This prevents module from polluting global scope
+local _ENV = {}
+
+
+-------------
+-- Private --
+-------------
+local SECONDS_IN_A_DAY = 60*60*24
+
+-- _ -> Float
+-- Returns the offset of machines timezone from UTC
+local function utcOffset()
+  local offset = hs.execute("date +%z")
+  return offset:sub(1, 3) + offset:sub(4, 5)/60
 end
 
--- Enable/disable darkMode
-local function setDarkMode(state)
+-- _ -> Int
+-- Returns the time in seconds from midnight of the current day
+local function midnightTime()
+  return os.time() - hs.timer.localTime()
+end
+
+-- String -> Int -> Int
+-- Parameters:
+--  * sunEvent   - "sunrise" or "sunset"
+--  * daysOffset - Offset of days for current day on which to get sunEvent time
+--
+-- Returns:
+--  * Unix time
+local function adjustedSunTime(sunEvent, daysOffset)
+  return hs.location[sunEvent](
+    hs.location.get(),
+    utcOffset(),
+    os.date("*t", os.time() + daysOffset * SECONDS_IN_A_DAY)
+  )
+end
+
+-- String -> Integer
+-- Given a string of a sunEvent, "sunrise" or "sunset", returns unix time for sunEvent on current day
+local function sunTime(sunEvent)
+  -- Funtion needed because of https://github.com/Hammerspoon/hammerspoon/issues/1977
+  local midnight = midnightTime()
+  local time = adjustedSunTime(sunEvent, 0)
+
+  if time < midnight then
+    return adjustedSunTime(sunEvent, 1)
+  elseif time > midnight + SECONDS_IN_A_DAY then
+    return adjustedSunTime(sunEvent, -1)
+  else
+    return time
+  end
+end
+
+-- String -> (_ -> ScheduleTimeTable)
+-- ScheduleTimeTable { time :: Integer, sunEvent :: String/Nil }
+--
+-- Given a string with time of day formatted as "HH:MM:SS"/"HH:MM", or "sunrise"/"sunset",
+-- returns a function that when called returns a table with a key `time` key with a unix time value, and
+-- a `sunEvent` key with the value "sunrise"/"sunset" if present.
+local function timeFnGenerator(timeOfDay)
+  if timeOfDay == "sunrise" or timeOfDay == "sunset" then
+    return function() return { time = sunTime(timeOfDay), sunEvent = timeOfDay} end
+  else
+    local secondsFromMidnight = hs.timer.seconds(timeOfDay)
+    return function() return { time = midnightTime() + secondsFromMidnight } end
+  end
+end
+
+-- Bool -> Nil
+local function setHammerspoonDM(state)
   hs.preferencesDarkMode(state)
   hs.console.darkMode(state)
   hs.console.consoleCommandColor{ white = (state and 1) or 0}
+end
 
-  hs.osascript.javascript(
+-- Bool -> Bool
+-- Returns a bool indicating success
+local function setSystemDM(state)
+  return hs.osascript.javascript(
     string.format(
       "Application('System Events').appearancePreferences.darkMode.set(%s)",
       state
@@ -39,140 +112,134 @@ local function setDarkMode(state)
   )
 end
 
--- Validate and process schedule times
-local function processScheduleTime(time)
-  if time == "sunrise" or time == "sunset" then
-    return time
+-- Bool -> Bool
+-- Returns a bool indicating success of setting system Dark Mode to desired state
+local function setDarkMode(state)
+  if functionToCall then functionToCall(state) end
+  setHammerspoonDM(state)
+  return setSystemDM(state)
+end
+
+-- ScheduleTimeTable -> ScheduleTimeTable -> Number -> Bool -> Number
+-- ScheduleTimeTable { time :: Integer, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
+--
+-- Determins what time Dark Mode should be toggle again
+local function nextToggleTime(on, off, currentTime, darkModeisOn)
+  if darkModeisOn and currentTime > on.time then
+    return off.sunEvent and adjustedSunTime(off.sunEvent, 1) or off.time + SECONDS_IN_A_DAY
+  elseif not darkModeisOn and currentTime > off.time then
+    return on.sunEvent and adjustedSunTime(on.sunEvent, 1) or on.time + SECONDS_IN_A_DAY
+  elseif darkModeisOn then
+    return off.time
   else
-    local secondsFromMidnight = hs.timer.seconds(time)
-    assert(secondsFromMidnight < secondsInADay, "Time given wasn't a time of day")
-    return secondsFromMidnight
+    return on.time
   end
 end
 
--- Convert seconds to HH:MM:SS format
-local function timeOfDay(time, exp)
-  if type(time) == "number" then
-    exp = exp or 1
-    local x = string.format("%i", (time % (60^exp)) // 60^(exp-1))
-    x = x//10 > 0 and x or "0" .. x
-    return exp < 3 and (timeOfDay(time, exp + 1) .. ":" .. x) or x
+-- Number -> Number -> Number -> Bool
+-- Determines whether Dark Mode should be turned on
+local function shouldDMBeOn(onTime, offTime, currentTime)
+  if currentTime >= offTime and currentTime < onTime then
+    if onTime > offTime then return false else return true end
   end
-  return time
+  if onTime > offTime then return false else return true end
 end
 
--- This function does all the important work of setting Dark Mode based on the schedule.
-local function setDarkModeOnSchedule()
-  -- Setup variables that we'll need
-  local location = hs.location.get()
-  local utcOffset = getUtcOffset()
+-- ScheduleTable -> hs.timer
+-- ScheduleTable { onAt :: (_ -> ScheduleTimeTable), offAt :: (_ -> ScheduleTimeTable) }
+-- Sets Dark Mode based on the schedule and returns a timer which fires when Dark Mode should be toggled next
+local function manageDMSchedule(sched)
   local currentTime = os.time()
-  local midnightTime = currentTime - hs.timer.localTime()
+  local on = sched.onAt()
+  local off = sched.offAt()
 
-  local function adjustSunTime(sunEvent, daysOffset)
-    return hs.location[sunEvent](
-      location,
-      utcOffset,
-      os.date("*t", currentTime + daysOffset * secondsInADay)
-    )
-  end
-
-  local function getScheduleUnixTime(time)
-    if type(time) == "number" then
-      return midnightTime + time
-    end
-    if location then
-      local sunTime = hs.location[time](location, utcOffset)
-      -- hs.location can return sunrise/sunset times that aren't on the same day so need to adjust
-      if sunTime < midnightTime then
-        return adjustSunTime(time, 1)
-      elseif sunTime > midnightTime + secondsInADay then
-        return adjustSunTime(time, -1)
-      else
-        return sunTime
-      end
-    end
-  end
-
-  local onTime = getScheduleUnixTime(schedule.onAt)
-  local offTime = getScheduleUnixTime(schedule.offAt)
-
-  if not onTime or not offTime then
-    hs.notify.new(
-      {
-        title = "DarkMode.spoon",
-        subTitle = "Schedule disabled: location unavailable",
-        informativeText = "Sunset/sunrise cannot be calculated",
-        withdrawAfter = 0
-      }
-    ):send()
-    obj:stop()
-    return
-  end
-
-  -- If offTime crosses the day barrier and it's currently passed onTime, move offTime to forward one day.
-  if onTime > offTime and currentTime >= onTime then
-    if type(schedule.offAt) == "number" then
-      offTime = offTime + secondsInADay
-    else
-      offTime = adjustSunTime(schedule.offAt, 1)
-    end
-  end
-
-  -- Turn Dark Mode on/off as dictated by schedule and create predicate function for new waitUntil timer
-  local predicateFn
-  if currentTime >= onTime and currentTime < offTime then
-    setDarkMode(true)
-    predicateFn = function() return os.time() >= offTime end
-  else
-    setDarkMode(false)
-    predicateFn = function() return os.time() >= onTime end
-  end
-
-  -- Create new timer. hs.timer.waitUntil used since timers that fire at a set time will skip a day if computer is sleeping when the time comes.
-  local actionFn = function() return setDarkModeOnSchedule() end
-  timer = hs.timer.waitUntil(predicateFn, actionFn, 60)
+  local desiredState = shouldDMBeOn(on.time, off.time, currentTime)
+  setDarkMode(desiredState)
+  local toggleTime = nextToggleTime(on, off, currentTime, desiderState)
+  print(toggleTime)
+  return hs.timer.waitUntil(
+    function() return currentTime >= toggleTime end,
+    function() return manageDMSchedule(sched) end,
+    60
+  )
 end
 
 
---- DarkMode.isOn() -> boolean
+------------
+-- Public --
+------------
+-- Spoon metadata
+name = "DarkMode"
+version = "1.0"
+author = "Malo Bourgon"
+license = "MIT - https://opensource.org/licenses/MIT"
+homepage = "https://github.com/malob/DarkMode.spoon"
+
+--- DarkMode.schedule (Table)
+--- Variable
+--- A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on/off respectivly.
+---
+--- Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs.
+schedule = {
+  onAt = timeFnGenerator("sunset"),
+  offAt = timeFnGenerator("sunrise")
+}
+
+--- DarkMode.functionToCall (Function)
+--- Variable
+--- A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.
+
+--- DarkMode.isOn() -> Bool
 --- Function
 --- Returns a boolean indicating whether Dark Mode is on or off.
 ---
 --- Returns:
----  * (Boolean) `true` if Dark Mode is on and `false` if it's off.
-function obj.isOn()
+---  * (Bool) `true` if Dark Mode is on and `false` if it's off.
+function isOn()
   local _, darkModeState = hs.osascript.javascript(
     'Application("System Events").appearancePreferences.darkMode()'
   )
   return darkModeState
 end
 
---- DarkMode.isScheduleOn() -> boolean
---- Function
+--- DarkMode:isScheduleOn() -> Bool
+--- Method
 --- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
 ---
 --- Returns:
----  * (Boolean) `true` if Dark Mode schedule is active and `false` if it's not.
-function obj.isScheduleOn()
-  if timer then return timer:running() end
+---  * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.
+function isScheduleOn(self)
+  if self.timer then return self.timer:running() end
   return false
 end
 
---- DarkMode.getSchedule() -> table
---- Function
---- Get the current schedule
+--- DarkMode:getSchedule([inUnixTime]) -> table
+--- Method
+--- Get the schedule for the current day.
+---
+--- Parameters:
+---  * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.
 ---
 --- Returns:
----  * (Table) A table with two elements with keys, `onAt` and `offAt`, each with a string value of "sunrise", "sunset", or a time of day formatted as "HH:MM:SS" (in 24-hour time).
-function obj.getSchedule()
-  return {
-    onAt = timeOfDay(schedule.onAt),
-    offAt = timeOfDay(schedule.offAt)
-  }
+---  * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,
+---    `time` and optionally `sunEvent`, where the later will we string "sunrise" or "sunset" if the `time`
+---    that time corresponds to a either a sunrise or sunset time.
+function getSchedule(self, inUnixTime)
+    return hs.fnutils.imap(
+      {"onAt", "offAt"},
+      function(x)
+        if inUnixTime then return { [x] = self.schedule[x]() } end
+        return {
+          [x] = {
+            time = os.date("%T", self.schedule[x]().time),
+            sunEvent = self.schedule[x]().sunEvent
+          }
+        }
+      end
+    )
 end
 
---- DarkMode:setSchedule(onTime, offTime) -> self
+--- DarkMode:setSchedule(onTime, offTime) -> Self
 --- Method
 --- Sets the schedule on which Dark Mode is enabled/disabled.
 ---
@@ -182,57 +249,58 @@ end
 ---
 --- Returns:
 ---  * Self
-function obj:setSchedule(onTime, offTime)
-  schedule.onAt = processScheduleTime(onTime)
-  schedule.offAt = processScheduleTime(offTime)
+function setSchedule(self, onTime, offTime)
+  self.schedule.onAt = timeFnGenerator(onTime)
+  self.schedule.offAt = timeFnGenerator(offTime)
 
-  if timer and timer:running() then
-    setDarkModeOnSchedule()
+  if self.timer and self.timer:running() then
+    self.timer = manageDMSchedule(self.schedule)
   end
+
   return self
 end
 
---- DarkMode:on() -> self
+--- DarkMode:on() -> Self
 --- Method
 --- Turns Dark Mode on.
 ---
 --- Returns:
 ---  * Self
-function obj:on()
+function on(self)
   setDarkMode(true)
   return self
 end
 
---- DarkMode:off() -> self
+--- DarkMode:off() -> Self
 --- Method
 --- Turns Dark Mode off.
 ---
 --- Returns:
 ---  * Self
-function obj:off()
+function off(self)
   setDarkMode(false)
   return self
 end
 
---- DarkMode:toggle() -> self
+--- DarkMode:toggle() -> Self
 --- Method
 --- Toggles Dark Mode.
 ---
 --- Returns:
 ---  * Self
-function obj:toggle()
+function toggle(self)
   setDarkMode(not self.isOn())
   return self
 end
 
---- DarkMode:start() -> self
+--- DarkMode:start() -> Self
 --- Method
 --- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
 ---
 --- Returns:
 ---  * Self
-function obj:start()
-  setDarkModeOnSchedule()
+function start(self)
+  self.timer = manageDMSchedule(self.schedule)
   return self
 end
 
@@ -242,8 +310,8 @@ end
 ---
 --- Returns:
 ---  * Self
-function obj:stop()
-  if timer then timer:stop() end
+function stop(self)
+  if self.timer then self.timer:stop() end
   return self
 end
 
@@ -257,7 +325,7 @@ end
 ---
 --- Returns:
 ---  * Self
-function obj:bindHotkeys(mapping)
+function bindHotkeys(self, mapping)
   for k, v in pairs(mapping) do
     hs.hotkey.bind(v[1], v[2], function() return self[k](self, k) end)
   end
@@ -265,4 +333,4 @@ function obj:bindHotkeys(mapping)
   return self
 end
 
-return obj
+return _ENV
