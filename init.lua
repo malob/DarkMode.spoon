@@ -69,15 +69,31 @@ local function setDarkModeOnSchedule()
   local currentTime = os.time()
   local midnightTime = currentTime - hs.timer.localTime()
 
-  -- Get the unix time for the onTime and offTime
+  local function adjustSunTime(sunEvent, daysOffset)
+    return hs.location[sunEvent](
+      location,
+      utcOffset,
+      os.date("*t", currentTime + daysOffset * secondsInADay)
+    )
+  end
+
   local function getScheduleUnixTime(time)
     if type(time) == "number" then
       return midnightTime + time
     end
     if location then
-      return hs.location[time](location, utcOffset)
+      local sunTime = hs.location[time](location, utcOffset)
+      -- hs.location can return sunrise/sunset times that aren't on the same day so need to adjust
+      if sunTime < midnightTime then
+        return adjustSunTime(time, 1)
+      elseif sunTime > midnightTime + secondsInADay then
+        return adjustSunTime(time, -1)
+      else
+        return sunTime
+      end
     end
   end
+
   local onTime = getScheduleUnixTime(schedule.onAt)
   local offTime = getScheduleUnixTime(schedule.offAt)
 
@@ -99,7 +115,7 @@ local function setDarkModeOnSchedule()
     if type(schedule.offAt) == "number" then
       offTime = offTime + secondsInADay
     else
-      offTime = hs.location[schedule.offAt](location, utcOffset, os.date("*t",offTime + secondsInADay))
+      offTime = adjustSunTime(schedule.offAt, 1)
     end
   end
 
