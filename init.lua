@@ -1,4 +1,3 @@
-
 --- === DarkMode ===
 --
 -- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically
@@ -113,7 +112,7 @@ local function setSystemDM(state)
   )
 end
 
--- Bool -> Bool
+-- Bool -> (Bool -> Nil) -> Bool
 -- Returns a bool indicating success of setting system Dark Mode to desired state
 local function setDarkMode(state, callback)
   if callback then callback(state) end
@@ -130,37 +129,37 @@ local function nextToggleTime(on, off, currentTime, darkModeisOn)
     return off.sunEvent and adjustedSunTime(off.sunEvent, 1) or off.time + SECONDS_IN_A_DAY
   elseif not darkModeisOn and currentTime > off.time then
     return on.sunEvent and adjustedSunTime(on.sunEvent, 1) or on.time + SECONDS_IN_A_DAY
-  elseif darkModeisOn then
-    return off.time
-  else
-    return on.time
   end
+
+  return darkModeisOn and off.time or on.time
 end
 
 -- Number -> Number -> Number -> Bool
 -- Determines whether Dark Mode should be turned on
 local function shouldDMBeOn(onTime, offTime, currentTime)
-  if currentTime >= offTime and currentTime < onTime then
-    if onTime > offTime then return false else return true end
+  if onTime > offTime then
+    if currentTime >= onTime or currentTime < offTime then return true end
+  else
+    if currentTime >= onTime and currentTime < offTime then return true end
   end
-  if onTime > offTime then return false else return true end
+  return false
 end
 
--- ScheduleTable -> hs.timer
+-- ScheduleTable -> (Bool -> Nil) -> hs.timer
 -- ScheduleTable { onAt :: (_ -> ScheduleTimeTable), offAt :: (_ -> ScheduleTimeTable) }
 -- Sets Dark Mode based on the schedule and returns a timer which fires when Dark Mode should be toggled next
-local function manageDMSchedule(sched, callback)
+local function manageDMSchedule(self)
   local currentTime = os.time()
-  local on = sched.onAt()
-  local off = sched.offAt()
+  local on = self.schedule.onAt()
+  local off = self.schedule.offAt()
 
   local desiredState = shouldDMBeOn(on.time, off.time, currentTime)
-  setDarkMode(desiredState, callback)
+  setDarkMode(desiredState, self.callbackFn)
   local toggleTime = nextToggleTime(on, off, currentTime, desiredState)
 
-  return hs.timer.waitUntil(
-    function() return currentTime >= toggleTime end,
-    function() return manageDMSchedule(sched, callback) end,
+  self.timer = hs.timer.waitUntil(
+    function() return os.time() >= toggleTime end,
+    function() manageDMSchedule(self) end,
     60
   )
 end
@@ -263,7 +262,7 @@ function setSchedule(self, onTime, offTime)
   self.schedule.offAt = timeFnGenerator(offTime)
 
   if self.timer and self.timer:running() then
-    self.timer = manageDMSchedule(self.schedule, self.callbackFn)
+    manageDMSchedule(self)
   end
 
   return self
@@ -310,7 +309,7 @@ end
 -- Returns:
 --  * Self
 function start(self)
-  self.timer = manageDMSchedule(self.schedule, self.callbackFn)
+  manageDMSchedule(self)
   return self
 end
 
