@@ -19,6 +19,7 @@ local hs = {
   preferencesDarkMode = hs.preferencesDarkMode,
   settings = hs.settings,
   timer = hs.timer,
+  hotkey = hs.hotkey
 }
 
 -- Empty environment in this scope
