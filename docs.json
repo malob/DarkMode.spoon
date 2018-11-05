@@ -13,8 +13,10 @@
           "Returns a boolean indicating whether Dark Mode is on or off.",
           ""
         ],
-        "name" : "isOn",
-        "def" : "DarkMode.isOn() -> Bool",
+        "parameters" : [
+
+        ],
+        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
         "notes" : [
 
         ],
@@ -23,22 +25,22 @@
         "returns" : [
           " * (Bool) `true` if Dark Mode is on and `false` if it's off."
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.isOn() -> Bool",
+        "name" : "isOn"
       }
     ],
     "Variable" : [
       {
-        "doc" : "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.\n\nMessing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs.",
+        "doc" : "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.\n\nMessing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs. To get a better understanding of the table the functions should return, have a look at the private function `timeFnGenerator()`.",
         "stripped_doc" : [
-          "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
+          "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
           "",
-          "Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs."
+          "Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs. To get a better understanding of the table the functions should return, have a look at the private function `timeFnGenerator()`."
         ],
-        "name" : "schedule",
-        "def" : "DarkMode.schedule (Table)",
+        "parameters" : [
+
+        ],
+        "desc" : "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
         "notes" : [
 
         ],
@@ -47,100 +49,98 @@
         "returns" : [
 
         ],
-        "desc" : "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.schedule (Table)",
+        "name" : "schedule"
       },
       {
-        "doc" : "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
+        "doc" : "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
         "stripped_doc" : [
-          "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled."
+          "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled."
         ],
-        "name" : "functionToCall",
-        "def" : "DarkMode.functionToCall (Function)",
+        "parameters" : [
+
+        ],
+        "desc" : "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
         "notes" : [
 
         ],
-        "signature" : "DarkMode.functionToCall (Function)",
+        "signature" : "DarkMode.callbackFn (Function)",
         "type" : "Variable",
         "returns" : [
 
         ],
-        "desc" : "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.callbackFn (Function)",
+        "name" : "callbackFn"
       }
     ],
     "stripped_doc" : [
 
     ],
+    "desc" : "This spoon allows you to enable, disable, and toggle Dark Mode, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
     "Deprecated" : [
 
     ],
     "type" : "Module",
-    "desc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
     "Constructor" : [
 
     ],
-    "Field" : [
-
-    ],
+    "doc" : "This spoon allows you to enable, disable, and toggle Dark Mode, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
     "Method" : [
       {
-        "doc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.\n\nReturns:\n * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.",
+        "doc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.\n\nReturns:\n * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not.",
         "stripped_doc" : [
           "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
           ""
         ],
-        "name" : "isScheduleOn",
-        "def" : "DarkMode:isScheduleOn() -> Bool",
+        "parameters" : [
+
+        ],
+        "desc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
         "notes" : [
 
         ],
         "signature" : "DarkMode:isScheduleOn() -> Bool",
         "type" : "Method",
         "returns" : [
-          " * (Bool) `true` if Dark Mode schedule is active and `false` if it's not."
+          " * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not."
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:isScheduleOn() -> Bool",
+        "name" : "isScheduleOn"
       },
       {
-        "doc" : "Get the schedule for the current day.\n\nParameters:\n * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.\n\nReturns:\n * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,\n   `time` and optionally `sunEvent`, where the later will we string \"sunrise\" or \"sunset\" if the `time`\n   that time corresponds to a either a sunrise or sunset time.",
+        "doc" : "Gets the schedule for the current day.\n\nParameters:\n * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.\n\nReturns:\n * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys, `time` and optionally `sunEvent`, where the later will be a string with a value of `\"sunrise\"` or `\"sunset\"` if the value for the `time` key corresponds to a sunrise or sunset time respectively.",
         "stripped_doc" : [
-          "Get the schedule for the current day.",
+          "Gets the schedule for the current day.",
           ""
         ],
-        "name" : "getSchedule",
-        "def" : "DarkMode:getSchedule([inUnixTime]) -> table",
+        "parameters" : [
+          " * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.",
+          ""
+        ],
+        "desc" : "Gets the schedule for the current day.",
         "notes" : [
 
         ],
         "signature" : "DarkMode:getSchedule([inUnixTime]) -> table",
         "type" : "Method",
         "returns" : [
-          " * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,",
-          "   `time` and optionally `sunEvent`, where the later will we string \"sunrise\" or \"sunset\" if the `time`",
-          "   that time corresponds to a either a sunrise or sunset time."
+          " * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys, `time` and optionally `sunEvent`, where the later will be a string with a value of `\"sunrise\"` or `\"sunset\"` if the value for the `time` key corresponds to a sunrise or sunset time respectively."
         ],
-        "desc" : "Get the schedule for the current day.",
-        "parameters" : [
-          " * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.",
-          ""
-        ]
+        "def" : "DarkMode:getSchedule([inUnixTime]) -> table",
+        "name" : "getSchedule"
       },
       {
-        "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n\nReturns:\n * Self",
+        "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.\n\nReturns:\n * Self",
         "stripped_doc" : [
           "Sets the schedule on which Dark Mode is enabled\/disabled.",
           ""
         ],
-        "name" : "setSchedule",
-        "def" : "DarkMode:setSchedule(onTime, offTime) -> Self",
+        "parameters" : [
+          " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.",
+          " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.",
+          ""
+        ],
+        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
         "notes" : [
 
         ],
@@ -149,12 +149,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
-        "parameters" : [
-          " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
-          " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
-          ""
-        ]
+        "def" : "DarkMode:setSchedule(onTime, offTime) -> Self",
+        "name" : "setSchedule"
       },
       {
         "doc" : "Turns Dark Mode on.\n\nReturns:\n * Self",
@@ -162,8 +158,10 @@
           "Turns Dark Mode on.",
           ""
         ],
-        "name" : "on",
-        "def" : "DarkMode:on() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Turns Dark Mode on.",
         "notes" : [
 
         ],
@@ -172,10 +170,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Turns Dark Mode on.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:on() -> Self",
+        "name" : "on"
       },
       {
         "doc" : "Turns Dark Mode off.\n\nReturns:\n * Self",
@@ -183,8 +179,10 @@
           "Turns Dark Mode off.",
           ""
         ],
-        "name" : "off",
-        "def" : "DarkMode:off() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Turns Dark Mode off.",
         "notes" : [
 
         ],
@@ -193,10 +191,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Turns Dark Mode off.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:off() -> Self",
+        "name" : "off"
       },
       {
         "doc" : "Toggles Dark Mode.\n\nReturns:\n * Self",
@@ -204,8 +200,10 @@
           "Toggles Dark Mode.",
           ""
         ],
-        "name" : "toggle",
-        "def" : "DarkMode:toggle() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Toggles Dark Mode.",
         "notes" : [
 
         ],
@@ -214,19 +212,40 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Toggles Dark Mode.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:toggle() -> Self",
+        "name" : "toggle"
       },
       {
-        "doc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
+        "doc" : "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.\n\nReturns:\n * Self",
         "stripped_doc" : [
-          "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
+          "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.",
           ""
         ],
-        "name" : "start",
-        "def" : "DarkMode:start() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.",
+        "notes" : [
+
+        ],
+        "signature" : "DarkMode:init() -> Self",
+        "type" : "Method",
+        "returns" : [
+          " * Self"
+        ],
+        "def" : "DarkMode:init() -> Self",
+        "name" : "init"
+      },
+      {
+        "doc" : "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
+        "stripped_doc" : [
+          "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
+          ""
+        ],
+        "parameters" : [
+
+        ],
+        "desc" : "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
         "notes" : [
 
         ],
@@ -235,10 +254,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:start() -> Self",
+        "name" : "start"
       },
       {
         "doc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.\n\nReturns:\n * Self",
@@ -246,8 +263,10 @@
           "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
           ""
         ],
-        "name" : "stop",
-        "def" : "DarkMode:stop() -> self",
+        "parameters" : [
+
+        ],
+        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
         "notes" : [
 
         ],
@@ -256,19 +275,21 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:stop() -> self",
+        "name" : "stop"
       },
       {
-        "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
+        "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
         "stripped_doc" : [
           "Binds hotkey mappings for this spoon.",
           ""
         ],
-        "name" : "bindHotkeys",
-        "def" : "DarkMode:bindHotkeys(mapping) -> self",
+        "parameters" : [
+          " * mapping (Table) - A table with keys who's names correspond to methods of this spoon and values that represent hotkey mappings. For example:",
+          "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
+          ""
+        ],
+        "desc" : "Binds hotkey mappings for this spoon.",
         "notes" : [
 
         ],
@@ -277,12 +298,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Binds hotkey mappings for this spoon.",
-        "parameters" : [
-          " * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:",
-          "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
-          ""
-        ]
+        "def" : "DarkMode:bindHotkeys(mapping) -> self",
+        "name" : "bindHotkeys"
       }
     ],
     "Command" : [
@@ -290,34 +307,36 @@
     ],
     "items" : [
       {
-        "doc" : "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
+        "doc" : "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
         "stripped_doc" : [
-          "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled."
+          "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled."
         ],
-        "name" : "functionToCall",
-        "def" : "DarkMode.functionToCall (Function)",
+        "parameters" : [
+
+        ],
+        "desc" : "A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
         "notes" : [
 
         ],
-        "signature" : "DarkMode.functionToCall (Function)",
+        "signature" : "DarkMode.callbackFn (Function)",
         "type" : "Variable",
         "returns" : [
 
         ],
-        "desc" : "A function that accepts on boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.callbackFn (Function)",
+        "name" : "callbackFn"
       },
       {
-        "doc" : "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.\n\nMessing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs.",
+        "doc" : "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.\n\nMessing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs. To get a better understanding of the table the functions should return, have a look at the private function `timeFnGenerator()`.",
         "stripped_doc" : [
-          "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
+          "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
           "",
-          "Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs."
+          "Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs. To get a better understanding of the table the functions should return, have a look at the private function `timeFnGenerator()`."
         ],
-        "name" : "schedule",
-        "def" : "DarkMode.schedule (Table)",
+        "parameters" : [
+
+        ],
+        "desc" : "A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
         "notes" : [
 
         ],
@@ -326,10 +345,8 @@
         "returns" : [
 
         ],
-        "desc" : "A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on\/off respectivly.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.schedule (Table)",
+        "name" : "schedule"
       },
       {
         "doc" : "Returns a boolean indicating whether Dark Mode is on or off.\n\nReturns:\n * (Bool) `true` if Dark Mode is on and `false` if it's off.",
@@ -337,8 +354,10 @@
           "Returns a boolean indicating whether Dark Mode is on or off.",
           ""
         ],
-        "name" : "isOn",
-        "def" : "DarkMode.isOn() -> Bool",
+        "parameters" : [
+
+        ],
+        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
         "notes" : [
 
         ],
@@ -347,19 +366,21 @@
         "returns" : [
           " * (Bool) `true` if Dark Mode is on and `false` if it's off."
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode is on or off.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode.isOn() -> Bool",
+        "name" : "isOn"
       },
       {
-        "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
+        "doc" : "Binds hotkey mappings for this spoon.\n\nParameters:\n * mapping (Table) - A table with keys who's names correspond to methods of this spoon and values that represent hotkey mappings. For example:\n   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`\n\nReturns:\n * Self",
         "stripped_doc" : [
           "Binds hotkey mappings for this spoon.",
           ""
         ],
-        "name" : "bindHotkeys",
-        "def" : "DarkMode:bindHotkeys(mapping) -> self",
+        "parameters" : [
+          " * mapping (Table) - A table with keys who's names correspond to methods of this spoon and values that represent hotkey mappings. For example:",
+          "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
+          ""
+        ],
+        "desc" : "Binds hotkey mappings for this spoon.",
         "notes" : [
 
         ],
@@ -368,57 +389,72 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Binds hotkey mappings for this spoon.",
-        "parameters" : [
-          " * mapping (Table) - A table with keys who's names correspond to methods of this spoon, and values that represent hotkey mappings. For example:",
-          "   * `{toggle = {{\"cmd\", \"option\", \"ctrl\"}, \"d\"}}`",
-          ""
-        ]
+        "def" : "DarkMode:bindHotkeys(mapping) -> self",
+        "name" : "bindHotkeys"
       },
       {
-        "doc" : "Get the schedule for the current day.\n\nParameters:\n * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.\n\nReturns:\n * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,\n   `time` and optionally `sunEvent`, where the later will we string \"sunrise\" or \"sunset\" if the `time`\n   that time corresponds to a either a sunrise or sunset time.",
+        "doc" : "Gets the schedule for the current day.\n\nParameters:\n * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.\n\nReturns:\n * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys, `time` and optionally `sunEvent`, where the later will be a string with a value of `\"sunrise\"` or `\"sunset\"` if the value for the `time` key corresponds to a sunrise or sunset time respectively.",
         "stripped_doc" : [
-          "Get the schedule for the current day.",
+          "Gets the schedule for the current day.",
           ""
         ],
-        "name" : "getSchedule",
-        "def" : "DarkMode:getSchedule([inUnixTime]) -> table",
+        "parameters" : [
+          " * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.",
+          ""
+        ],
+        "desc" : "Gets the schedule for the current day.",
         "notes" : [
 
         ],
         "signature" : "DarkMode:getSchedule([inUnixTime]) -> table",
         "type" : "Method",
         "returns" : [
-          " * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,",
-          "   `time` and optionally `sunEvent`, where the later will we string \"sunrise\" or \"sunset\" if the `time`",
-          "   that time corresponds to a either a sunrise or sunset time."
+          " * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys, `time` and optionally `sunEvent`, where the later will be a string with a value of `\"sunrise\"` or `\"sunset\"` if the value for the `time` key corresponds to a sunrise or sunset time respectively."
         ],
-        "desc" : "Get the schedule for the current day.",
-        "parameters" : [
-          " * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.",
-          ""
-        ]
+        "def" : "DarkMode:getSchedule([inUnixTime]) -> table",
+        "name" : "getSchedule"
       },
       {
-        "doc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.\n\nReturns:\n * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.",
+        "doc" : "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.\n\nReturns:\n * Self",
+        "stripped_doc" : [
+          "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.",
+          ""
+        ],
+        "parameters" : [
+
+        ],
+        "desc" : "Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.",
+        "notes" : [
+
+        ],
+        "signature" : "DarkMode:init() -> Self",
+        "type" : "Method",
+        "returns" : [
+          " * Self"
+        ],
+        "def" : "DarkMode:init() -> Self",
+        "name" : "init"
+      },
+      {
+        "doc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.\n\nReturns:\n * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not.",
         "stripped_doc" : [
           "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
           ""
         ],
-        "name" : "isScheduleOn",
-        "def" : "DarkMode:isScheduleOn() -> Bool",
+        "parameters" : [
+
+        ],
+        "desc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
         "notes" : [
 
         ],
         "signature" : "DarkMode:isScheduleOn() -> Bool",
         "type" : "Method",
         "returns" : [
-          " * (Bool) `true` if Dark Mode schedule is active and `false` if it's not."
+          " * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not."
         ],
-        "desc" : "Returns a boolean indicating whether Dark Mode will be enable\/disabled based on a schedule.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:isScheduleOn() -> Bool",
+        "name" : "isScheduleOn"
       },
       {
         "doc" : "Turns Dark Mode off.\n\nReturns:\n * Self",
@@ -426,8 +462,10 @@
           "Turns Dark Mode off.",
           ""
         ],
-        "name" : "off",
-        "def" : "DarkMode:off() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Turns Dark Mode off.",
         "notes" : [
 
         ],
@@ -436,10 +474,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Turns Dark Mode off.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:off() -> Self",
+        "name" : "off"
       },
       {
         "doc" : "Turns Dark Mode on.\n\nReturns:\n * Self",
@@ -447,8 +483,10 @@
           "Turns Dark Mode on.",
           ""
         ],
-        "name" : "on",
-        "def" : "DarkMode:on() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Turns Dark Mode on.",
         "notes" : [
 
         ],
@@ -457,19 +495,21 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Turns Dark Mode on.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:on() -> Self",
+        "name" : "on"
       },
       {
-        "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".\n\nReturns:\n * Self",
+        "doc" : "Sets the schedule on which Dark Mode is enabled\/disabled.\n\nParameters:\n * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.\n * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.\n\nReturns:\n * Self",
         "stripped_doc" : [
           "Sets the schedule on which Dark Mode is enabled\/disabled.",
           ""
         ],
-        "name" : "setSchedule",
-        "def" : "DarkMode:setSchedule(onTime, offTime) -> Self",
+        "parameters" : [
+          " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.",
+          " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values `\"sunrise\"` or `\"sunset\"`.",
+          ""
+        ],
+        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
         "notes" : [
 
         ],
@@ -478,21 +518,19 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Sets the schedule on which Dark Mode is enabled\/disabled.",
-        "parameters" : [
-          " * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
-          " * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as \"HH:MM:SS\" or \"HH:MM\", or the values \"sunrise\" or \"sunset\".",
-          ""
-        ]
+        "def" : "DarkMode:setSchedule(onTime, offTime) -> Self",
+        "name" : "setSchedule"
       },
       {
-        "doc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
+        "doc" : "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).\n\nReturns:\n * Self",
         "stripped_doc" : [
-          "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
+          "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
           ""
         ],
-        "name" : "start",
-        "def" : "DarkMode:start() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Start enabling\/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
         "notes" : [
 
         ],
@@ -501,10 +539,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Start enabling\/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:start() -> Self",
+        "name" : "start"
       },
       {
         "doc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.\n\nReturns:\n * Self",
@@ -512,8 +548,10 @@
           "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
           ""
         ],
-        "name" : "stop",
-        "def" : "DarkMode:stop() -> self",
+        "parameters" : [
+
+        ],
+        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
         "notes" : [
 
         ],
@@ -522,10 +560,8 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Stops this spoon from enabling\/disabling Dark Mode on a schedule.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:stop() -> self",
+        "name" : "stop"
       },
       {
         "doc" : "Toggles Dark Mode.\n\nReturns:\n * Self",
@@ -533,8 +569,10 @@
           "Toggles Dark Mode.",
           ""
         ],
-        "name" : "toggle",
-        "def" : "DarkMode:toggle() -> Self",
+        "parameters" : [
+
+        ],
+        "desc" : "Toggles Dark Mode.",
         "notes" : [
 
         ],
@@ -543,13 +581,13 @@
         "returns" : [
           " * Self"
         ],
-        "desc" : "Toggles Dark Mode.",
-        "parameters" : [
-
-        ]
+        "def" : "DarkMode:toggle() -> Self",
+        "name" : "toggle"
       }
     ],
-    "doc" : "This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically enable\/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.",
+    "Field" : [
+
+    ],
     "name" : "DarkMode"
   }
 ]

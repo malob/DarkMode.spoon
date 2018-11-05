@@ -1,8 +1,6 @@
 --- === DarkMode ===
---
--- This spoon allow you to enable, disable, and toggle Dark Mode in macOS, as well as automatically
--- enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and
--- disables it at sunrise.
+---
+--- This spoon allows you to enable, disable, and toggle Dark Mode, as well as automatically enable/disable DarkMode based on a schedule. The default schedule enables Dark Mode at sunset and disables it at sunrise.
 
 
 -----------------------
@@ -215,30 +213,26 @@ license = "MIT - https://opensource.org/licenses/MIT"
 homepage = "https://github.com/malob/DarkMode.spoon"
 
 --- DarkMode.schedule (Table)
--- Variable
--- A table with two keys, `onAt` and `offAt`, who values should both be functions that when called by
--- this spoon return a table indicating the time today when Dark Mode should be turn on/off respectivly.
---
--- Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers
--- for whom `DarkMode:setSchedule()` isn't sufficient for their needs.
+--- Variable
+--- A table with two keys, `onAt` and `offAt`, who's values should both be functions that when called by this spoon return a table indicating the time today when Dark Mode should be turn on/off respectivly.
+---
+--- Messing around with `DarkMode.schedule` directly should only be done by adventurous programmers for whom `DarkMode:setSchedule()` isn't sufficient for their needs. To get a better understanding of the table the functions should return, have a look at the private function `timeFnGenerator()`.
 schedule = {
   onAt = timeFnGenerator("sunset"),
   offAt = timeFnGenerator("sunrise")
 }
 
 --- DarkMode.callbackFn (Function)
--- Variable
--- A function that's called every time Dark Mode is toggle by this spoon.
--- The function provided should accept a boolean argument, which will be `true` when
--- Dark Mode is enabled, and `false` when it's disabled.
+--- Variable
+--- A function that's called every time Dark Mode is toggle by this spoon. The function provided should accept a boolean argument, which will be `true` when Dark Mode is enabled, and `false` when it's disabled.
 callbackFn = nil
 
--- DarkMode.isOn() -> Bool
--- Function
--- Returns a boolean indicating whether Dark Mode is on or off.
---
--- Returns:
---  * (Bool) `true` if Dark Mode is on and `false` if it's off.
+--- DarkMode.isOn() -> Bool
+--- Function
+--- Returns a boolean indicating whether Dark Mode is on or off.
+---
+--- Returns:
+---  * (Bool) `true` if Dark Mode is on and `false` if it's off.
 function isOn()
   local _, darkModeState = hs.osascript.javascript(
     'Application("System Events").appearancePreferences.darkMode()'
@@ -247,27 +241,25 @@ function isOn()
 end
 
 --- DarkMode:isScheduleOn() -> Bool
--- Method
--- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
---
--- Returns:
---  * (Bool) `true` if Dark Mode schedule is active and `false` if it's not.
+--- Method
+--- Returns a boolean indicating whether Dark Mode will be enable/disabled based on a schedule.
+---
+--- Returns:
+---  * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not.
 function isScheduleOn(self)
   if self.timer then return self.timer:running() end
   return false
 end
 
 --- DarkMode:getSchedule([inUnixTime]) -> table
--- Method
--- Get the schedule for the current day.
---
--- Parameters:
---  * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.
---
--- Returns:
---  * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys,
---    `time` and optionally `sunEvent`, where the later will we string "sunrise" or "sunset" if the `time`
---    that time corresponds to a either a sunrise or sunset time.
+--- Method
+--- Gets the schedule for the current day.
+---
+--- Parameters:
+---  * (Optional) inUnixTime (Bool) - Setting this value to `true` will return the schedule times in unix time.
+---
+--- Returns:
+---  * (Table) A table with two elements with keys, `onAt` and `offAt`, each of which is a table with keys, `time` and optionally `sunEvent`, where the later will be a string with a value of `"sunrise"` or `"sunset"` if the value for the `time` key corresponds to a sunrise or sunset time respectively.
 function getSchedule(self, inUnixTime)
   return hs.fnutils.imap(
     {"onAt", "offAt"},
@@ -284,17 +276,15 @@ function getSchedule(self, inUnixTime)
 end
 
 --- DarkMode:setSchedule(onTime, offTime) -> Self
--- Method
--- Sets the schedule on which Dark Mode is enabled/disabled.
---
--- Parameters:
---  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted
---     as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
---  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted
---     as "HH:MM:SS" or "HH:MM", or the values "sunrise" or "sunset".
---
--- Returns:
---  * Self
+--- Method
+--- Sets the schedule on which Dark Mode is enabled/disabled.
+---
+--- Parameters:
+---  * onTime (String)  - Time of day when Dark Mode should be *enabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values `"sunrise"` or `"sunset"`.
+---  * offTime (String) - Time of day when Dark Mode should be *disabled* in 24-hour time formatted as "HH:MM:SS" or "HH:MM", or the values `"sunrise"` or `"sunset"`.
+---
+--- Returns:
+---  * Self
 function setSchedule(self, onTime, offTime)
   assert(onTime ~= offTime, "onTime and offTime cannot be the same value")
 
@@ -342,14 +332,11 @@ function toggle(self)
 end
 
 --- DarkMode:init() -> Self
--- Medthod
--- Creates `hs.settings` record for this spoon to use as cache for location and
--- location cache expiry time. This cached location allows the spoon to keep functiong
--- when the schedule includes a sunrise or sunset time and `hs.location.get()`
--- can't get a location.
---
--- Returns:
---  * Self
+--- Method
+--- Creates an `hs.settings` record for this spoon to use as cache for location and location cache expiry time. This cached location allows the spoon to keep functioning when the schedule includes a sunrise or sunset time and `hs.location.get()` can't get a location.
+---
+--- Returns:
+---  * Self
 function init(self)
   if not hs.settings.getKeys()[SETTINGS_KEY] then hs.settings.set(SETTINGS_KEY, {}) end
 
@@ -363,39 +350,37 @@ function init(self)
 end
 
 --- DarkMode:start() -> Self
--- Method
--- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`.
--- By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
---
--- Returns:
---  * Self
+--- Method
+--- Start enabling/disabling Dark Mode based on the schedule set using `DarkMode:setSchedule()`. By default, Dark Mode is enabled at sunset (`onTime`) and disabled at sunrise (`offTime`).
+---
+--- Returns:
+---  * Self
 function start(self)
   manageDMSchedule(self)
   return self
 end
 
 --- DarkMode:stop() -> self
--- Method
--- Stops this spoon from enabling/disabling Dark Mode on a schedule.
---
--- Returns:
---  * Self
+--- Method
+--- Stops this spoon from enabling/disabling Dark Mode on a schedule.
+---
+--- Returns:
+---  * Self
 function stop(self)
   if self.timer then self.timer:stop() end
   return self
 end
 
 --- DarkMode:bindHotkeys(mapping) -> self
--- Method
--- Binds hotkey mappings for this spoon.
---
--- Parameters:
---  * mapping (Table) - A table with keys who's names correspond to methods of this spoon,
---    and values that represent hotkey mappings. For example:
---    * `{toggle = {{"cmd", "option", "ctrl"}, "d"}}`
---
--- Returns:
---  * Self
+--- Method
+--- Binds hotkey mappings for this spoon.
+---
+--- Parameters:
+---  * mapping (Table) - A table with keys who's names correspond to methods of this spoon and values that represent hotkey mappings. For example:
+---    * `{toggle = {{"cmd", "option", "ctrl"}, "d"}}`
+---
+--- Returns:
+---  * Self
 function bindHotkeys(self, mapping)
   for k, v in pairs(mapping) do
     hs.hotkey.bind(v[1], v[2], function() return self[k](self, k) end)
