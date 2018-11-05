@@ -115,8 +115,8 @@ end
 
 -- Bool -> Bool
 -- Returns a bool indicating success of setting system Dark Mode to desired state
-local function setDarkMode(state)
-  if functionToCall then functionToCall(state) end
+local function setDarkMode(state, callback)
+  if callback then callback(state) end
   setHammerspoonDM(state)
   return setSystemDM(state)
 end
@@ -149,18 +149,18 @@ end
 -- ScheduleTable -> hs.timer
 -- ScheduleTable { onAt :: (_ -> ScheduleTimeTable), offAt :: (_ -> ScheduleTimeTable) }
 -- Sets Dark Mode based on the schedule and returns a timer which fires when Dark Mode should be toggled next
-local function manageDMSchedule(sched)
+local function manageDMSchedule(sched, callback)
   local currentTime = os.time()
   local on = sched.onAt()
   local off = sched.offAt()
 
   local desiredState = shouldDMBeOn(on.time, off.time, currentTime)
-  setDarkMode(desiredState)
+  setDarkMode(desiredState, callback)
   local toggleTime = nextToggleTime(on, off, currentTime, desiredState)
-  print(toggleTime)
+
   return hs.timer.waitUntil(
     function() return currentTime >= toggleTime end,
-    function() return manageDMSchedule(sched) end,
+    function() return manageDMSchedule(sched, callback) end,
     60
   )
 end
@@ -189,12 +189,12 @@ schedule = {
   offAt = timeFnGenerator("sunrise")
 }
 
---- DarkMode.functionToCall (Function)
+--- DarkMode.callbackFn (Function)
 -- Variable
 -- A function that's called every time Dark Mode is toggle by this spoon.
 -- The function provided should accept a boolean argument, which will be `true` when
 -- Dark Mode is enabled, and `false` when it's disabled.
-functionToCall = nil
+callbackFn = nil
 
 -- DarkMode.isOn() -> Bool
 -- Function
@@ -263,7 +263,7 @@ function setSchedule(self, onTime, offTime)
   self.schedule.offAt = timeFnGenerator(offTime)
 
   if self.timer and self.timer:running() then
-    self.timer = manageDMSchedule(self.schedule)
+    self.timer = manageDMSchedule(self.schedule, self.callbackFn)
   end
 
   return self
@@ -276,7 +276,7 @@ end
 --- Returns:
 ---  * Self
 function on(self)
-  setDarkMode(true)
+  setDarkMode(true, self.callbackFn)
   return self
 end
 
@@ -287,7 +287,7 @@ end
 --- Returns:
 ---  * Self
 function off(self)
-  setDarkMode(false)
+  setDarkMode(false, self.callbackFn)
   return self
 end
 
@@ -298,7 +298,7 @@ end
 --- Returns:
 ---  * Self
 function toggle(self)
-  setDarkMode(not self.isOn())
+  setDarkMode(not self.isOn(), self.callbackFn)
   return self
 end
 
@@ -310,7 +310,7 @@ end
 -- Returns:
 --  * Self
 function start(self)
-  self.timer = manageDMSchedule(self.schedule)
+  self.timer = manageDMSchedule(self.schedule, self.callbackFn)
   return self
 end
 
