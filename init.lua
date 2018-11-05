@@ -7,7 +7,6 @@
 -- Setup Environment --
 -----------------------
 -- Create locals for all needed globals so we have access to them
-local print = print
 local assert, pairs = assert, pairs
 local os = { date = os.date, time = os.time }
 local string = { format = string.format }
@@ -16,12 +15,10 @@ local hs = {
   execute = hs.execute,
   fnutils = hs.fnutils,
   location = hs.location,
-  notify = hs.notify,
   osascript = hs.osascript,
   preferencesDarkMode = hs.preferencesDarkMode,
   settings = hs.settings,
   timer = hs.timer,
-  inspect = hs.inspect
 }
 
 -- Empty environment in this scope
@@ -32,9 +29,9 @@ local _ENV = {}
 -------------
 -- Private --
 -------------
-local SECONDS_IN_A_DAY = 60*60*24
+local SECONDS_IN_A_DAY = 86400
 local SETTINGS_KEY = "DarkModeSpoon"
-local LOCATION_CACHE_TTL = 60*60
+local LOCATION_CACHE_TTL = 3600
 
 -- _ -> Int
 local function locationExpiryTime()
@@ -59,7 +56,7 @@ local function dayStartUnixTime(date)
   return os.time(date)
 end
 
--- _ -> Table
+-- _ -> hs.location Table
 -- Return location table in the format of hs.location.get()
 local function location()
   local settings = hs.settings.get(SETTINGS_KEY)
@@ -360,7 +357,7 @@ function start(self)
   return self
 end
 
---- DarkMode:stop() -> self
+--- DarkMode:stop() -> Self
 --- Method
 --- Stops this spoon from enabling/disabling Dark Mode on a schedule.
 ---
@@ -371,7 +368,7 @@ function stop(self)
   return self
 end
 
---- DarkMode:bindHotkeys(mapping) -> self
+--- DarkMode:bindHotkeys(mapping) -> Self
 --- Method
 --- Binds hotkey mappings for this spoon.
 ---
