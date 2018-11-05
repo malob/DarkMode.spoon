@@ -10,7 +10,7 @@
 -----------------------
 -- Create locals for all needed globals so we have access to them
 local print = print
-local pairs = pairs
+local assert, pairs = assert, pairs
 local os = { date = os.date, time = os.time }
 local string = { format = string.format }
 local hs = {
@@ -21,6 +21,7 @@ local hs = {
   notify = hs.notify,
   osascript = hs.osascript,
   preferencesDarkMode = hs.preferencesDarkMode,
+  settings = hs.settings,
   timer = hs.timer,
   inspect = hs.inspect
 }
@@ -34,6 +35,13 @@ local _ENV = {}
 -- Private --
 -------------
 local SECONDS_IN_A_DAY = 60*60*24
+local SETTINGS_KEY = "DarkModeSpoon"
+local LOCATION_CACHE_TTL = 60*60
+
+-- _ -> Int
+local function locationExpiryTime()
+  return os.time() + LOCATION_CACHE_TTL
+end
 
 -- _ -> Float
 -- Returns the offset of machines timezone from UTC
@@ -42,41 +50,59 @@ local function utcOffset()
   return offset:sub(1, 3) + offset:sub(4, 5)/60
 end
 
--- _ -> Int
--- Returns the time in seconds from midnight of the current day
-local function midnightTime()
-  return os.time() - hs.timer.localTime()
-end
-
--- String -> Int -> Int
--- Parameters:
---  * sunEvent   - "sunrise" or "sunset"
---  * daysOffset - Offset of days for current day on which to get sunEvent time
---
--- Returns:
---  * Unix time
-local function adjustedSunTime(sunEvent, daysOffset)
-  return hs.location[sunEvent](
-    hs.location.get(),
-    utcOffset(),
-    os.date("*t", os.time() + daysOffset * SECONDS_IN_A_DAY)
+-- os.date Table -> Int
+-- Returns unix time for start of current day.
+local function dayStartUnixTime(date)
+  date = date and hs.fnutils.copy(date) or os.date("*t")
+  hs.fnutils.ieach(
+    { "hour", "min", "sec" },
+    function(x) date[x] = 0 end
   )
+  return os.time(date)
 end
 
--- String -> Int
--- Given a string of a sunEvent, "sunrise" or "sunset", returns unix time for sunEvent on current day
-local function sunTime(sunEvent)
-  -- Funtion needed because of https://github.com/Hammerspoon/hammerspoon/issues/1977
-  local midnight = midnightTime()
-  local time = adjustedSunTime(sunEvent, 0)
+-- _ -> Table
+-- Return location table in the format of hs.location.get()
+local function location()
+  local settings = hs.settings.get(SETTINGS_KEY)
 
-  if time < midnight then
-    return adjustedSunTime(sunEvent, 1)
-  elseif time > midnight + SECONDS_IN_A_DAY then
-    return adjustedSunTime(sunEvent, -1)
-  else
-    return time
+  if os.time() < settings.locationExpiryTime then
+    return settings.location
   end
+
+  local updatedLocation = hs.location.get()
+
+  if updatedLocation then
+    settings.location = updatedLocation
+    settings.locationExpiryTime = locationExpiryTime()
+    hs.settings.set(SETTINGS_KEY, settings)
+    return updatedLocation
+  end
+
+  return settings.location
+end
+
+-- os.date Table -> Number -> os.date Table
+-- Given a date table and a number of days, returns a new table offset by original by days.
+local function addDaysToDate(date, days)
+  return os.date("*t", os.time(date) + days * SECONDS_IN_A_DAY)
+end
+
+-- String -> hs.location Table -> Numeber -> os.date Table -> Int
+-- Wraper for hs.location sunrise/sunset functions.
+-- Funtion needed because of https://github.com/Hammerspoon/hammerspoon/issues/1977
+local function sunTime(sunEvent, loc, offset, date)
+  date = date or os.date("*t")
+  local dayStatTime = dayStartUnixTime(date)
+
+  local time = hs.location[sunEvent](loc, offset, date)
+
+  if time < dayStatTime then
+    return hs.location[sunEvent](loc, offset, addDaysToDate(date, 1))
+  elseif time > dayStatTime + SECONDS_IN_A_DAY then
+    return hs.location[sunEvent](loc, offset, addDaysToDate(date, -1))
+  end
+  return time
 end
 
 -- String -> (_ -> ScheduleTimeTable)
@@ -87,10 +113,16 @@ end
 -- a `sunEvent` key with the value "sunrise"/"sunset" if present.
 local function timeFnGenerator(timeOfDay)
   if timeOfDay == "sunrise" or timeOfDay == "sunset" then
-    return function() return { time = sunTime(timeOfDay), sunEvent = timeOfDay} end
-  else
-    local secondsFromMidnight = hs.timer.seconds(timeOfDay)
-    return function() return { time = midnightTime() + secondsFromMidnight } end
+    return function()
+      return {
+        time = sunTime(timeOfDay, location(), utcOffset()),
+        sunEvent = timeOfDay
+      }
+    end
+  end
+
+  return function()
+    return { time = dayStartUnixTime() + hs.timer.seconds(timeOfDay) }
   end
 end
 
@@ -120,17 +152,23 @@ local function setDarkMode(state, callback)
   return setSystemDM(state)
 end
 
+-- ScheduleTimeTable -> Int
+-- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
+-- Returns unix time representing time in ScheduleTimeTable move forward by one day
+local function offsetTimeByDay(schedTime)
+  if schedTime.sunEvent then
+    return sunTime(schedTime.sunEvent, location(), utcOffset(), addDaysToDate(os.date("*t"), 1))
+  end
+  return schedTime.time + SECONDS_IN_A_DAY
+end
+
 -- ScheduleTimeTable -> ScheduleTimeTable -> Number -> Bool -> Number
 -- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
---
 -- Determines what time Dark Mode should be toggled again
 local function nextToggleTime(on, off, currentTime, darkModeisOn)
-  if darkModeisOn and currentTime > on.time then
-    return off.sunEvent and adjustedSunTime(off.sunEvent, 1) or off.time + SECONDS_IN_A_DAY
-  elseif not darkModeisOn and currentTime > off.time then
-    return on.sunEvent and adjustedSunTime(on.sunEvent, 1) or on.time + SECONDS_IN_A_DAY
+  if currentTime >= on.time and currentTime >= off.time then
+    return darkModeisOn and offsetTimeByDay(off) or offsetTimeByDay(on)
   end
-
   return darkModeisOn and off.time or on.time
 end
 
@@ -258,6 +296,8 @@ end
 -- Returns:
 --  * Self
 function setSchedule(self, onTime, offTime)
+  assert(onTime ~= offTime, "onTime and offTime cannot be the same value")
+
   self.schedule.onAt = timeFnGenerator(onTime)
   self.schedule.offAt = timeFnGenerator(offTime)
 
@@ -301,6 +341,27 @@ function toggle(self)
   return self
 end
 
+--- DarkMode:init() -> Self
+-- Medthod
+-- Creates `hs.settings` record for this spoon to use as cache for location and
+-- location cache expiry time. This cached location allows the spoon to keep functiong
+-- when the schedule includes a sunrise or sunset time and `hs.location.get()`
+-- can't get a location.
+--
+-- Returns:
+--  * Self
+function init(self)
+  if not hs.settings.getKeys()[SETTINGS_KEY] then hs.settings.set(SETTINGS_KEY, {}) end
+
+  local settings = hs.settings.get(SETTINGS_KEY)
+  if not settings.location then
+    settings.location = hs.location.get()
+    settings.locationExpiryTime = locationExpiryTime()
+    hs.settings.set(SETTINGS_KEY, settings)
+  end
+  return self
+end
+
 --- DarkMode:start() -> Self
 -- Method
 -- Start enabling/disabling Dark Mode base on the schedule set using `DarkMode:setSchedule()`.
@@ -339,7 +400,6 @@ function bindHotkeys(self, mapping)
   for k, v in pairs(mapping) do
     hs.hotkey.bind(v[1], v[2], function() return self[k](self, k) end)
   end
-
   return self
 end
 
