@@ -11,15 +11,16 @@ local assert, pairs = assert, pairs
 local os = { date = os.date, time = os.time }
 local string = { format = string.format }
 local hs = {
+  brightness = hs.brightness,
   console = hs.console,
   execute = hs.execute,
   fnutils = hs.fnutils,
+  hotkey = hs.hotkey,
   location = hs.location,
   osascript = hs.osascript,
   preferencesDarkMode = hs.preferencesDarkMode,
   settings = hs.settings,
-  timer = hs.timer,
-  hotkey = hs.hotkey
+  timer = hs.timer
 }
 
 -- Empty environment in this scope
@@ -32,7 +33,10 @@ local _ENV = {}
 -------------
 local SECONDS_IN_A_DAY = 86400
 local SETTINGS_KEY = "DarkModeSpoon"
-local LOCATION_CACHE_TTL = 3600
+local LOCATION_CACHE_TTL = 3600 -- seconds
+local DEFAULT_LIGHT_THRESHOLD = 75
+local DEFAULT_LIGHT_OFFSET = 5
+local DEFAULT_LIGHT_INTERVAL = 5 -- seconds
 
 -- _ -> Int
 local function locationExpiryTime()
@@ -179,25 +183,54 @@ local function shouldDMBeOn(onTime, offTime, currentTime)
   return false
 end
 
--- ScheduleTable -> (Bool -> Nil) -> hs.timer
--- ScheduleTable { onAt :: (_ -> ScheduleTimeTable), offAt :: (_ -> ScheduleTimeTable) }
--- Sets Dark Mode based on the schedule and returns a timer which fires when Dark Mode should be toggled next
-local function manageDMSchedule(self)
-  local currentTime = os.time()
-  local on = self.schedule.onAt()
-  local off = self.schedule.offAt()
-
-  local desiredState = shouldDMBeOn(on.time, off.time, currentTime)
-  setDarkMode(desiredState, self.callbackFn)
-  local toggleTime = nextToggleTime(on, off, currentTime, desiredState)
-
-  self.timer = hs.timer.waitUntil(
-    function() return os.time() >= toggleTime end,
-    function() manageDMSchedule(self) end,
-    60
-  )
+-- Number -> Number -> Bool -> (Bool -> Nil) -> Nil
+local function toggleDMOnBrightness(threshold, offset, callback)
+  local brightness = hs.brightness.get()
+  if brightness >= threshold + offset then setDarkMode(false, callback) end
+  if brightness <= threshold - offset then setDarkMode(true, callback) end
 end
 
+-- DarkMode Object -> Nil
+-- Sets Dark Mode based on the schedule
+local function autoToggleDM(self)
+  local scheduleDesiredDMState
+
+  if self.schedule then
+    local currentTime = os.time()
+    local on = self.schedule.onAt()
+    local off = self.schedule.offAt()
+
+    scheduleDesiredDMState = shouldDMBeOn(on.time, off.time, currentTime)
+    setDarkMode(scheduleDesiredDMState, self.callbackFn)
+    local toggleTime = nextToggleTime(on, off, currentTime, scheduleDesiredDMState)
+
+    self.scheduleTimer = hs.timer.waitUntil(
+      function() return os.time() >= toggleTime end,
+      function() autoToggleDM(self) end,
+      60
+    )
+  end
+
+  if self.lightAutoToggle.enabled then
+    if scheduleDesiredDMState then
+      self.lightTimer = nil
+    else
+      local light = self.lightAutoToggle
+      local toggleFn = function()
+        toggleDMOnBrightness(
+          light.threshold or DEFAULT_LIGHT_THRESHOLD,
+          light.offset or DEFAULT_LIGHT_OFFSET,
+          self.callbackFn
+        )
+      end
+      toggleFn()
+      self.lightTimer = hs.timer.doEvery(
+        light.interval or DEFAULT_LIGHT_INTERVAL,
+        toggleFn
+      )
+    end
+  end
+end
 
 -- luacheck: no global
 ------------
@@ -209,6 +242,10 @@ version = "1.0"
 author = "Malo Bourgon"
 license = "MIT - https://opensource.org/licenses/MIT"
 homepage = "https://github.com/malob/DarkMode.spoon"
+
+lightAutoToggle = {
+  enabled = false
+}
 
 --- DarkMode.schedule (Table)
 --- Variable
@@ -289,8 +326,8 @@ function setSchedule(self, onTime, offTime)
   self.schedule.onAt = timeFnGenerator(onTime)
   self.schedule.offAt = timeFnGenerator(offTime)
 
-  if self.timer and self.timer:running() then
-    manageDMSchedule(self)
+  if self.scheduleTimer and self.scheduleTimer:running() then
+    autoToggleDM(self)
   end
 
   return self
@@ -354,7 +391,7 @@ end
 --- Returns:
 ---  * Self
 function start(self)
-  manageDMSchedule(self)
+  autoToggleDM(self)
   return self
 end
 
@@ -365,7 +402,8 @@ end
 --- Returns:
 ---  * Self
 function stop(self)
-  if self.timer then self.timer:stop() end
+  if self.scheduleTimer then self.scheduleTimer:stop() end
+  if self.lightTimer then self.lightTimer:stop() end
   return self
 end
 
