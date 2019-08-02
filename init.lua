@@ -36,33 +36,16 @@ local SETTINGS_KEY = "DarkModeSpoon"
 local LOCATION_CACHE_TTL = 3600 -- seconds
 local DEFAULT_LIGHT_THRESHOLD = 75
 local DEFAULT_LIGHT_OFFSET = 5
-local DEFAULT_LIGHT_INTERVAL = 5 -- seconds
+local DEFAULT_LIGHT_INTERVAL = 1 -- seconds
 
--- _ -> Int
+-- IO Int
 local function locationExpiryTime()
   return os.time() + LOCATION_CACHE_TTL
 end
 
--- _ -> Float
--- Returns the offset of machines timezone from UTC
-local function utcOffset()
-  local offset = hs.execute("date +%z")
-  return offset:sub(1, 3) + offset:sub(4, 5)/60
-end
-
--- os.date Table -> Int
--- Returns unix time for start of current day.
-local function dayStartUnixTime(date)
-  date = date and hs.fnutils.copy(date) or os.date("*t")
-  hs.fnutils.ieach(
-    { "hour", "min", "sec" },
-    function(x) date[x] = 0 end
-  )
-  return os.time(date)
-end
-
--- _ -> hs.location Table
--- Return location table in the format of hs.location.get()
+-- IO hs.location Table
+-- Return location table of current location if available and last cached location
+-- otherwise, in the format returned by hs.location.get()
 local function location()
   local settings = hs.settings.get(SETTINGS_KEY)
 
@@ -82,17 +65,34 @@ local function location()
   return settings.location
 end
 
--- os.date Table -> Number -> os.date Table
+-- IO Float
+-- Returns the offset of machines timezone from UTC
+local function utcOffset()
+  local offset = hs.execute("date +%z")
+  return offset:sub(1, 3) + offset:sub(4, 5)/60
+end
+
+-- os.date Table -> Int
+-- Returns unix time for start of current day.
+local function dayStartUnixTime(date)
+  date = hs.fnutils.copy(date)
+  hs.fnutils.ieach(
+    { "hour", "min", "sec" },
+    function(x) date[x] = 0 end
+  )
+  return os.time(date)
+end
+
+-- os.date Table -> Number -> IO os.date Table
 -- Given a date table and a number of days, returns a new table offset by original by days.
 local function addDaysToDate(date, days)
   return os.date("*t", os.time(date) + days * SECONDS_IN_A_DAY)
 end
 
--- String -> hs.location Table -> Numeber -> os.date Table -> Int
+-- String -> hs.location Table -> Numeber -> os.date Table -> IO Int
 -- Wraper for hs.location sunrise/sunset functions.
 -- Funtion needed because of https://github.com/Hammerspoon/hammerspoon/issues/1977
 local function sunTime(sunEvent, loc, offset, date)
-  date = date or os.date("*t")
   local dayStatTime = dayStartUnixTime(date)
 
   local time = hs.location[sunEvent](loc, offset, date)
@@ -105,7 +105,7 @@ local function sunTime(sunEvent, loc, offset, date)
   return time
 end
 
--- String -> (_ -> ScheduleTimeTable)
+-- String -> IO (ScheduleTimeTable)
 -- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil }
 --
 -- Given a string with time of day formatted as "HH:MM:SS"/"HH:MM", or "sunrise"/"sunset",
@@ -115,25 +115,25 @@ local function timeFnGenerator(timeOfDay)
   if timeOfDay == "sunrise" or timeOfDay == "sunset" then
     return function()
       return {
-        time = sunTime(timeOfDay, location(), utcOffset()),
+        time = sunTime(timeOfDay, location(), utcOffset(), os.date("*t")),
         sunEvent = timeOfDay
       }
     end
   end
 
   return function()
-    return { time = dayStartUnixTime() + hs.timer.seconds(timeOfDay) }
+    return { time = dayStartUnixTime(os.date("*t")) + hs.timer.seconds(timeOfDay) }
   end
 end
 
--- Bool -> Nil
+-- Bool -> IO Nil
 local function setHammerspoonDM(state)
   hs.preferencesDarkMode(state)
   hs.console.darkMode(state)
   hs.console.consoleCommandColor{ white = (state and 1) or 0}
 end
 
--- Bool -> Bool
+-- Bool -> IO Bool
 -- Returns a bool indicating success
 local function setSystemDM(state)
   return hs.osascript.javascript(
@@ -144,7 +144,7 @@ local function setSystemDM(state)
   )
 end
 
--- Bool -> (Bool -> Nil) -> Bool
+-- Bool -> (Bool -> Nil) -> IO Bool
 -- Returns a bool indicating success of setting system Dark Mode to desired state
 local function setDarkMode(state, callback)
   if callback then callback(state) end
@@ -153,7 +153,8 @@ local function setDarkMode(state, callback)
 end
 
 -- ScheduleTimeTable -> Int
--- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
+-- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil }
+-- (see timeFnGenerator() for more infomation on this table)
 -- Returns unix time representing time in ScheduleTimeTable move forward by one day
 local function offsetTimeByDay(schedTime)
   if schedTime.sunEvent then
@@ -163,7 +164,8 @@ local function offsetTimeByDay(schedTime)
 end
 
 -- ScheduleTimeTable -> ScheduleTimeTable -> Number -> Bool -> Number
--- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil } (see timeFnGenerator() for more infomation on this table)
+-- ScheduleTimeTable { time :: Number, sunEvent :: String/Nil }
+-- (see timeFnGenerator() for more infomation on this table)
 -- Determines what time Dark Mode should be toggled again
 local function nextToggleTime(on, off, currentTime, darkModeisOn)
   if currentTime >= on.time and currentTime >= off.time then
@@ -282,7 +284,7 @@ end
 --- Returns:
 ---  * (Bool) `true` if the Dark Mode schedule is active and `false` if it's not.
 function isScheduleOn(self)
-  if self.timer then return self.timer:running() end
+  if self.scheduleTimer then return self.scheduleTimer:running() end
   return false
 end
 
